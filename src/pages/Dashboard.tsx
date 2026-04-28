@@ -16,7 +16,7 @@ export const Dashboard: React.FC<{ invoices: Invoice[] }> = ({ invoices }) => {
     { label: 'Unpaid', value: invoices.filter(i => i.status === PaymentStatus.UNPAID).length, color: 'text-amber-600', border: 'border-border-base' },
     { label: 'Partial', value: invoices.filter(i => i.status === PaymentStatus.PARTIALLY_PAID).length, color: 'text-blue-600', border: 'border-border-base' },
     { label: 'Overdue', value: invoices.filter(i => i.status === PaymentStatus.OVERDUE).length, color: 'text-rose-600', border: 'border-border-base' },
-    { label: 'Pending', value: `$${(pendingAmount / 1000).toFixed(1)}k`, color: 'text-text-main', border: 'border-stone-300 shadow-sm' },
+    { label: 'Pending', value: `₹${(pendingAmount / 1000).toFixed(1)}k`, color: 'text-text-main', border: 'border-stone-300 shadow-sm' },
   ];
 
   const getStatusColor = (status: PaymentStatus) => {
@@ -59,7 +59,7 @@ export const Dashboard: React.FC<{ invoices: Invoice[] }> = ({ invoices }) => {
                     <tr key={inv.id} className="hover:bg-bg-main transition-colors text-[13px]">
                       <td className="px-4 py-3.5 font-medium text-text-main">{inv.invoiceNumber}</td>
                       <td className="px-4 py-3.5 text-text-muted">{inv.customerName}</td>
-                      <td className="px-4 py-3.5 font-semibold text-text-main">${inv.grandTotal.toLocaleString()}</td>
+                      <td className="px-4 py-3.5 font-semibold text-text-main">₹{inv.grandTotal.toLocaleString()}</td>
                       <td className="px-4 py-3.5 text-center">
                         <Badge color={getStatusColor(inv.status)}>{inv.status}</Badge>
                       </td>
@@ -98,7 +98,7 @@ export const Dashboard: React.FC<{ invoices: Invoice[] }> = ({ invoices }) => {
           <div className="bg-sidebar-bg rounded-xl p-6 flex items-center justify-between text-white shadow-lg overflow-hidden relative">
             <div className="space-y-1 relative z-10">
               <p className="text-[10px] text-stone-400 uppercase tracking-widest font-bold">Recent Payment</p>
-              <p className="text-2xl font-bold">${invoices[0]?.paidAmount.toLocaleString() || "0.00"}</p>
+              <p className="text-2xl font-bold">₹{invoices[0]?.paidAmount.toLocaleString() || "0.00"}</p>
               <p className="text-[11px] text-stone-400 italic">from {invoices[0]?.customerName || "N/A"}</p>
             </div>
             <div className="w-12 h-12 bg-emerald-500 rounded-full flex items-center justify-center text-xl relative z-10 shadow-lg shadow-emerald-500/20">

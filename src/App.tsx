@@ -4,6 +4,9 @@ import { Dashboard } from './pages/Dashboard';
 import { ProductsPage } from './pages/Products';
 import { CustomersPage } from './pages/Customers';
 import { InvoicesPage } from './pages/Invoices';
+import { Inventory } from './pages/Inventory';
+import { Orders } from './pages/Orders';
+import { Suppliers } from './pages/Suppliers';
 import { InvoiceCreation } from './pages/InvoiceCreation';
 import { InvoiceDetails } from './pages/InvoiceDetails';
 import { Login } from './pages/Login';
@@ -127,6 +130,12 @@ export default function App() {
             }}
           />
         );
+      case 'inventory':
+        return <Inventory />;
+      case 'orders':
+        return <Orders />;
+      case 'suppliers':
+        return <Suppliers />;
       case 'payments':
         return (
           <div className="flex items-center justify-center h-64 text-slate-500 italic">
@@ -139,7 +148,7 @@ export default function App() {
   };
 
   return (
-    <div className="flex min-h-screen bg-slate-50 font-sans antialiased text-slate-900">
+    <div className="flex min-h-screen bg-bg-main font-sans antialiased text-text-main">
       <Sidebar 
         activeTab={activeTab} 
         setActiveTab={(tab) => {
@@ -166,7 +175,7 @@ export default function App() {
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
-              className="absolute inset-0 bg-slate-900/60 backdrop-blur-sm"
+              className="absolute inset-0 bg-sidebar-bg/60 backdrop-blur-sm"
               onClick={() => setPayingInvoice(null)}
             />
             <motion.div 
@@ -177,20 +186,20 @@ export default function App() {
             >
               <Card title="Record Payment" subtitle={`Update payment for ${payingInvoice.invoiceNumber}`}>
                 <div className="absolute top-4 right-4">
-                  <button onClick={() => setPayingInvoice(null)} className="p-1 rounded-full hover:bg-slate-100 text-slate-400">
+                  <button onClick={() => setPayingInvoice(null)} className="p-1 rounded-full hover:bg-bg-main text-text-muted">
                     <X size={20} />
                   </button>
                 </div>
                 
                 <div className="space-y-6">
-                  <div className="p-4 rounded-xl bg-indigo-50 border border-indigo-100 flex justify-between items-center text-indigo-900">
+                  <div className="p-4 rounded-xl bg-[#F8F7F5] border border-border-base flex justify-between items-center text-text-main">
                     <div>
-                      <p className="text-xs font-semibold uppercase tracking-wider opacity-60">Balance Due</p>
-                      <p className="text-2xl font-bold">${(payingInvoice.grandTotal - payingInvoice.paidAmount).toLocaleString()}</p>
+                      <p className="text-[10px] font-bold uppercase tracking-wider text-text-muted">Balance Due</p>
+                      <p className="text-2xl font-bold">₹{(payingInvoice.grandTotal - payingInvoice.paidAmount).toLocaleString()}</p>
                     </div>
                     <div className="text-right">
                       <p className="text-xs font-semibold uppercase tracking-wider opacity-60">Grand Total</p>
-                      <p className="text-lg font-medium opacity-80">${payingInvoice.grandTotal.toLocaleString()}</p>
+                      <p className="text-lg font-medium opacity-80">₹{payingInvoice.grandTotal.toLocaleString()}</p>
                     </div>
                   </div>
 

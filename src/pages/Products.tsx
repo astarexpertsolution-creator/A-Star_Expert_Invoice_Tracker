@@ -107,7 +107,7 @@ export const ProductsPage: React.FC<ProductsPageProps> = ({ products, onAdd, onE
                   <td className="py-4 font-medium text-slate-900">{p.name}</td>
                   <td className="py-4 text-slate-500 font-mono text-xs">{p.sku}</td>
                   <td className="py-4 text-slate-600">{p.category}</td>
-                  <td className="py-4 font-semibold text-slate-900">${p.unitPrice.toFixed(2)}</td>
+                  <td className="py-4 font-semibold text-slate-900">₹{p.unitPrice.toFixed(2)}</td>
                   <td className="py-4 text-slate-600">{p.taxPercentage}%</td>
                   <td className="py-4">
                     <Badge color={p.status === ProductStatus.ACTIVE ? 'green' : 'red'}>

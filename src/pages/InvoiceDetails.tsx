@@ -47,7 +47,7 @@ export const InvoiceDetails: React.FC<InvoiceDetailsProps> = ({ invoice, onBack 
           </div>
           <div className="text-right">
             <p className="text-sm font-medium text-slate-500 uppercase tracking-wider">Amount Due</p>
-            <p className="text-4xl font-black text-indigo-600">${(invoice.grandTotal - invoice.paidAmount).toLocaleString()}</p>
+            <p className="text-4xl font-black text-indigo-600">₹{(invoice.grandTotal - invoice.paidAmount).toLocaleString()}</p>
             <p className="text-slate-400 text-xs mt-1">Due by {invoice.dueDate}</p>
           </div>
         </div>
@@ -93,8 +93,8 @@ export const InvoiceDetails: React.FC<InvoiceDetailsProps> = ({ invoice, onBack 
                       <p className="text-xs text-slate-500">Tax: {item.taxPercentage}% included</p>
                     </td>
                     <td className="px-6 py-4 text-center text-slate-600">{item.quantity}</td>
-                    <td className="px-6 py-4 text-right text-slate-600">${item.unitPrice.toFixed(2)}</td>
-                    <td className="px-6 py-4 text-right font-semibold text-slate-900">${item.lineTotal.toFixed(2)}</td>
+                    <td className="px-6 py-4 text-right text-slate-600">₹{item.unitPrice.toFixed(2)}</td>
+                    <td className="px-6 py-4 text-right font-semibold text-slate-900">₹{item.lineTotal.toFixed(2)}</td>
                   </tr>
                 ))}
               </tbody>
@@ -112,23 +112,23 @@ export const InvoiceDetails: React.FC<InvoiceDetailsProps> = ({ invoice, onBack 
             <div className="w-full md:w-80 space-y-3">
               <div className="flex justify-between text-slate-600">
                 <span>Subtotal</span>
-                <span>${invoice.subtotal.toLocaleString()}</span>
+                <span>₹{invoice.subtotal.toLocaleString()}</span>
               </div>
               <div className="flex justify-between text-slate-600">
                 <span>Total Tax</span>
-                <span>${invoice.taxTotal.toLocaleString()}</span>
+                <span>₹{invoice.taxTotal.toLocaleString()}</span>
               </div>
               <div className="flex justify-between text-xl font-bold text-slate-900 border-t border-slate-100 pt-3">
                 <span>Grand Total</span>
-                <span>${invoice.grandTotal.toLocaleString()}</span>
+                <span>₹{invoice.grandTotal.toLocaleString()}</span>
               </div>
               <div className="flex justify-between text-green-600 font-medium">
                 <span>Paid to Date</span>
-                <span>-${invoice.paidAmount.toLocaleString()}</span>
+                <span>-₹{invoice.paidAmount.toLocaleString()}</span>
               </div>
               <div className="flex justify-between text-xl font-black text-indigo-600 bg-indigo-50 p-4 rounded-xl mt-4">
                 <span>Balance Due</span>
-                <span>${(invoice.grandTotal - invoice.paidAmount).toLocaleString()}</span>
+                <span>₹{(invoice.grandTotal - invoice.paidAmount).toLocaleString()}</span>
               </div>
             </div>
           </div>

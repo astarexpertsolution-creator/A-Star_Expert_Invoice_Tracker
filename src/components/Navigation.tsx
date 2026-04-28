@@ -1,5 +1,5 @@
 import React from 'react';
-import { LayoutDashboard, Package, Users, FileText, CreditCard, ChevronLeft, ChevronRight, Menu, LogOut } from 'lucide-react';
+import { LayoutDashboard, Package, Users, FileText, CreditCard, ChevronLeft, ChevronRight, Menu, LogOut, Boxes, ShoppingCart, Truck } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 
 interface SidebarProps {
@@ -12,7 +12,10 @@ interface SidebarProps {
 const navItems = [
   { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard },
   { id: 'products', label: 'Products', icon: Package },
+  { id: 'inventory', label: 'Inventory', icon: Boxes },
+  { id: 'orders', label: 'Orders', icon: ShoppingCart },
   { id: 'customers', label: 'Customers', icon: Users },
+  { id: 'suppliers', label: 'Suppliers', icon: Truck },
   { id: 'invoices', label: 'Invoices', icon: FileText },
   { id: 'payments', label: 'Payments', icon: CreditCard },
 ];

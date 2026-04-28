@@ -88,8 +88,8 @@ export const InvoicesPage: React.FC<InvoicesPageProps> = ({ invoices, onCreate, 
                   <td className="py-4 text-slate-600 text-sm">{inv.invoiceDate}</td>
                   <td className="py-4 text-slate-600 text-sm">{inv.dueDate}</td>
                   <td className="py-4">
-                    <div className="font-semibold text-slate-900">${inv.grandTotal.toLocaleString()}</div>
-                    <div className="text-[10px] text-slate-400">Balance: ${(inv.grandTotal - inv.paidAmount).toLocaleString()}</div>
+                    <div className="font-semibold text-slate-900">₹{inv.grandTotal.toLocaleString()}</div>
+                    <div className="text-[10px] text-slate-400">Balance: ₹{(inv.grandTotal - inv.paidAmount).toLocaleString()}</div>
                   </td>
                   <td className="py-4">
                     <Badge color={getStatusColor(inv.status)}>{inv.status}</Badge>

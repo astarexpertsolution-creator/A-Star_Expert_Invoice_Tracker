@@ -149,7 +149,7 @@ export const InvoiceCreation: React.FC<InvoiceCreationProps> = ({ products, cust
                         />
                       </td>
                       <td className="py-3 px-2 text-right font-medium text-slate-900">
-                        ${item.lineTotal.toFixed(2)}
+                        ₹{item.lineTotal.toFixed(2)}
                       </td>
                       <td className="py-3 pl-2">
                         <button onClick={() => removeItem(idx)} className="text-red-400 hover:text-red-600 transition-colors">
@@ -204,15 +204,15 @@ export const InvoiceCreation: React.FC<InvoiceCreationProps> = ({ products, cust
             <div className="space-y-3">
               <div className="flex justify-between text-slate-600">
                 <span>Subtotal</span>
-                <span>${subtotal.toLocaleString(undefined, { minimumFractionDigits: 2 })}</span>
+                <span>₹{subtotal.toLocaleString(undefined, { minimumFractionDigits: 2 })}</span>
               </div>
               <div className="flex justify-between text-slate-600 border-b border-slate-100 pb-3">
                 <span>Tax Total</span>
-                <span>${taxTotal.toLocaleString(undefined, { minimumFractionDigits: 2 })}</span>
+                <span>₹{taxTotal.toLocaleString(undefined, { minimumFractionDigits: 2 })}</span>
               </div>
               <div className="flex justify-between text-xl font-bold text-slate-900 pt-2">
                 <span>Grand Total</span>
-                <span>${grandTotal.toLocaleString(undefined, { minimumFractionDigits: 2 })}</span>
+                <span>₹{grandTotal.toLocaleString(undefined, { minimumFractionDigits: 2 })}</span>
               </div>
               <p className="text-[10px] text-slate-400 text-center mt-4">Totals will be automatically updated as you add items</p>
             </div>
