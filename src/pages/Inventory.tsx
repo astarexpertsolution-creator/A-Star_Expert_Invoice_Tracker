@@ -30,15 +30,15 @@ export const Inventory: React.FC = () => {
           </div>
           <div>
             <p className="text-[10px] font-black text-text-muted uppercase tracking-[0.2em] mb-1">Low Stock</p>
-            <p className="text-4xl font-black tracking-tighter">{inventoryItems.filter(i => i.stockLevel < i.reorderLevel).length}</p>
+            <p className="text-4xl font-black tracking-tighter text-text-main">{inventoryItems.filter(i => i.stockLevel < i.reorderLevel).length}</p>
           </div>
         </div>
-        <div className="bg-text-main border border-text-main rounded-[2rem] p-8 shadow-xl shadow-stone-200 flex items-center gap-6 text-white">
+        <div className="bg-text-main dark:bg-zinc-900 border border-text-main dark:border-zinc-800 rounded-[2rem] p-8 shadow-sm flex items-center gap-6 text-white transition-colors">
           <div className="w-16 h-16 bg-white/10 text-white rounded-2xl flex items-center justify-center">
             <TrendingUp size={28} />
           </div>
           <div>
-            <p className="text-[10px] font-black text-stone-500 uppercase tracking-[0.2em] mb-1">Total Valuation</p>
+            <p className="text-[10px] font-black text-white/50 uppercase tracking-[0.2em] mb-1">Total Valuation</p>
             <p className="text-3xl font-black tracking-tighter">
               ₹{inventoryItems.reduce((acc, current) => acc + (current.stockLevel * current.unitPrice), 0).toLocaleString()}
             </p>

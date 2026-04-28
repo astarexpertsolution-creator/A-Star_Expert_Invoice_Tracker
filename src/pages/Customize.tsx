@@ -24,10 +24,10 @@ export const CustomizePage: React.FC = () => {
                   className={`flex items-center gap-4 p-6 rounded-2xl border-2 transition-all ${
                     settings.mode === 'light' 
                       ? 'border-accent-sage bg-accent-sage/5 shadow-lg shadow-accent-sage/10' 
-                      : 'border-border-base bg-white hover:border-stone-300'
+                      : 'border-border-base bg-white dark:bg-zinc-900 hover:border-stone-300'
                   }`}
                 >
-                  <div className={`p-3 rounded-xl ${settings.mode === 'light' ? 'bg-accent-sage text-white' : 'bg-stone-100 text-stone-400'}`}>
+                  <div className={`p-3 rounded-xl ${settings.mode === 'light' ? 'bg-accent-sage text-white' : 'bg-stone-100 dark:bg-zinc-800 text-stone-400'}`}>
                     <Sun size={24} />
                   </div>
                   <div className="text-left">
@@ -41,10 +41,10 @@ export const CustomizePage: React.FC = () => {
                   className={`flex items-center gap-4 p-6 rounded-2xl border-2 transition-all ${
                     settings.mode === 'dark' 
                       ? 'border-accent-sage bg-accent-sage/5 shadow-lg shadow-accent-sage/10' 
-                      : 'border-border-base bg-white hover:border-stone-300'
+                      : 'border-border-base bg-white dark:bg-zinc-900 hover:border-stone-300'
                   }`}
                 >
-                  <div className={`p-3 rounded-xl ${settings.mode === 'dark' ? 'bg-accent-sage text-white' : 'bg-stone-100 text-stone-400'}`}>
+                  <div className={`p-3 rounded-xl ${settings.mode === 'dark' ? 'bg-accent-sage text-white' : 'bg-stone-100 dark:bg-zinc-800 text-stone-400'}`}>
                     <Moon size={24} />
                   </div>
                   <div className="text-left">
@@ -56,7 +56,7 @@ export const CustomizePage: React.FC = () => {
           </Card>
 
           {/* Color Palettes */}
-          <Card title="Enterprise Palette" subtitle="Select the primary brand identity for the workspace">
+          <Card title="Enterprise Palette" subtitle="Select a preset brand identity or customize below">
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
               {Object.entries(palettes).map(([name, colors]) => (
                 <button
@@ -65,21 +65,58 @@ export const CustomizePage: React.FC = () => {
                   className={`relative p-5 rounded-2xl border-2 transition-all flex flex-col items-center gap-3 active:scale-95 ${
                     settings.palette === name 
                       ? 'border-accent-sage bg-accent-sage/5 shadow-lg shadow-accent-sage/10' 
-                      : 'border-border-base hover:border-stone-300 bg-white'
+                      : 'border-border-base hover:border-stone-300 bg-white dark:bg-zinc-900'
                   }`}
                 >
                   <div 
-                    className="w-10 h-10 rounded-full shadow-lg border-2 border-white" 
+                    className="w-10 h-10 rounded-full shadow-lg border-2 border-white dark:border-zinc-800" 
                     style={{ backgroundColor: colors.primary }}
                   />
                   <span className="text-[10px] font-black uppercase tracking-widest text-text-main">{name}</span>
                   {settings.palette === name && (
-                    <div className="absolute top-2 right-2 w-5 h-5 bg-accent-sage text-white rounded-full flex items-center justify-center">
+                    <div className="absolute top-2 right-2 w-5 h-5 bg-accent-sage text-white rounded-full flex items-center justify-center shadow-md">
                       <Check size={12} />
                     </div>
                   )}
                 </button>
               ))}
+            </div>
+
+            <div className="mt-8 grid grid-cols-1 sm:grid-cols-2 gap-6 pt-8 border-t border-border-base/50">
+               <div>
+                  <p className="text-[10px] font-black text-text-muted uppercase tracking-[0.2em] mb-3">Primary Brand Color</p>
+                  <div className="flex items-center gap-4">
+                     <div className="w-12 h-12 rounded-xl border border-border-base shadow-inner overflow-hidden">
+                        <input 
+                           type="color" 
+                           value={settings.primaryColor} 
+                           onChange={(e) => updateSettings({ primaryColor: e.target.value, palette: 'custom' })}
+                           className="w-full h-full scale-150 cursor-pointer"
+                        />
+                     </div>
+                     <div>
+                        <p className="text-xs font-black font-mono text-text-main">{settings.primaryColor.toUpperCase()}</p>
+                        <p className="text-[10px] text-text-muted font-bold uppercase tracking-wider">Custom Selection</p>
+                     </div>
+                  </div>
+               </div>
+               <div>
+                  <p className="text-[10px] font-black text-text-muted uppercase tracking-[0.2em] mb-3">Secondary Accent Color</p>
+                  <div className="flex items-center gap-4">
+                     <div className="w-12 h-12 rounded-xl border border-border-base shadow-inner overflow-hidden">
+                        <input 
+                           type="color" 
+                           value={settings.secondaryColor} 
+                           onChange={(e) => updateSettings({ secondaryColor: e.target.value, palette: 'custom' })}
+                           className="w-full h-full scale-150 cursor-pointer"
+                        />
+                     </div>
+                     <div>
+                        <p className="text-xs font-black font-mono text-text-main">{settings.secondaryColor.toUpperCase()}</p>
+                        <p className="text-[10px] text-text-muted font-bold uppercase tracking-wider">Custom Selection</p>
+                     </div>
+                  </div>
+               </div>
             </div>
           </Card>
 

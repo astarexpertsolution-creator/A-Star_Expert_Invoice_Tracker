@@ -58,9 +58,9 @@ export const CustomersPage: React.FC<CustomersPageProps> = ({ customers, onAdd, 
 
   return (
     <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 bg-white p-4 rounded-xl shadow-sm border border-slate-200">
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 bg-[var(--theme-card-bg,white)] p-4 rounded-xl shadow-sm border border-border-base transition-colors">
         <div className="relative flex-1 max-w-sm">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-text-muted transition-colors" size={18} />
           <Input 
             placeholder="Search by name, code or email..." 
             className="pl-10" 
@@ -77,41 +77,41 @@ export const CustomersPage: React.FC<CustomersPageProps> = ({ customers, onAdd, 
         <div className="overflow-x-auto">
           <table className="w-full text-left">
             <thead>
-              <tr className="border-b border-slate-100">
-                <th className="pb-4 font-semibold text-slate-600 text-sm">Customer Info</th>
-                <th className="pb-4 font-semibold text-slate-600 text-sm">Contact Details</th>
-                <th className="pb-4 font-semibold text-slate-600 text-sm">Billing Address</th>
-                <th className="pb-4 font-semibold text-slate-600 text-sm">Tax ID</th>
-                <th className="pb-4 font-semibold text-slate-600 text-sm">Status</th>
-                <th className="pb-4 font-semibold text-slate-600 text-sm text-right">Actions</th>
+              <tr className="border-b border-border-base">
+                <th className="pb-4 font-semibold text-text-muted text-sm uppercase tracking-wider">Customer Info</th>
+                <th className="pb-4 font-semibold text-text-muted text-sm uppercase tracking-wider">Contact Details</th>
+                <th className="pb-4 font-semibold text-text-muted text-sm uppercase tracking-wider">Billing Address</th>
+                <th className="pb-4 font-semibold text-text-muted text-sm uppercase tracking-wider">Tax ID</th>
+                <th className="pb-4 font-semibold text-text-muted text-sm uppercase tracking-wider text-center">Status</th>
+                <th className="pb-4 font-semibold text-text-muted text-sm uppercase tracking-wider text-right">Actions</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-slate-50">
+            <tbody className="divide-y divide-border-base">
               {filteredCustomers.map((c) => (
-                <tr key={c.id} className="hover:bg-slate-50 transition-colors">
+                <tr key={c.id} className="hover:bg-bg-main transition-colors">
                   <td className="py-4">
-                    <div className="font-medium text-slate-900">{c.name}</div>
-                    <div className="text-slate-500 font-mono text-xs mt-0.5">{c.code}</div>
+                    <div className="font-medium text-text-main">{c.name}</div>
+                    <div className="text-text-muted font-mono text-xs mt-0.5">{c.code}</div>
                   </td>
                   <td className="py-4">
                     <div className="flex flex-col gap-1">
-                      <div className="flex items-center gap-1.5 text-sm text-slate-600">
-                        <Mail size={14} className="text-slate-400" />
+                      <div className="flex items-center gap-1.5 text-sm text-text-muted transition-colors">
+                        <Mail size={14} className="text-text-muted opacity-60" />
                         {c.email}
                       </div>
-                      <div className="flex items-center gap-1.5 text-sm text-slate-600">
-                        <Phone size={14} className="text-slate-400" />
+                      <div className="flex items-center gap-1.5 text-sm text-text-muted transition-colors">
+                        <Phone size={14} className="text-text-muted opacity-60" />
                         {c.mobile}
                       </div>
                     </div>
                   </td>
                   <td className="py-4">
-                    <div className="flex items-start gap-1.5 text-sm text-slate-600 max-w-[200px]">
-                      <MapPin size={14} className="text-slate-400 mt-0.5 shrink-0" />
+                    <div className="flex items-start gap-1.5 text-sm text-text-muted max-w-[200px] transition-colors">
+                      <MapPin size={14} className="text-text-muted opacity-60 mt-0.5 shrink-0" />
                       <span className="truncate whitespace-normal line-clamp-2">{c.billingAddress}</span>
                     </div>
                   </td>
-                  <td className="py-4 text-slate-600 text-sm">{c.taxNumber}</td>
+                  <td className="py-4 text-text-muted text-sm">{c.taxNumber}</td>
                   <td className="py-4">
                     <Badge color={c.status === 'Active' ? 'green' : 'red'}>
                       {c.status}
@@ -146,7 +146,7 @@ export const CustomersPage: React.FC<CustomersPageProps> = ({ customers, onAdd, 
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
-              className="absolute inset-0 bg-slate-900/60 backdrop-blur-sm"
+              className="absolute inset-0 bg-black/60 backdrop-blur-sm"
               onClick={() => setIsModalOpen(false)}
             />
             <motion.div 

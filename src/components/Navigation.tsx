@@ -43,7 +43,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ activeTab, setActiveTab, isCol
               <img 
                 src="/logo.png" 
                 alt="A-Star Logo" 
-                className={`${isCollapsed ? 'w-8 h-8' : 'w-32'} h-auto object-contain`} 
+                className={`${isCollapsed ? 'w-8 h-8' : 'w-32'} h-auto object-contain brightness-0 invert`} 
                 onError={(e) => {
                   e.currentTarget.onerror = null;
                   e.currentTarget.src='https://placehold.co/128x128/1A1A1A/white?text=A*';
@@ -67,9 +67,13 @@ export const Sidebar: React.FC<SidebarProps> = ({ activeTab, setActiveTab, isCol
             onClick={() => setActiveTab(item.id)}
             className={`w-full flex items-center gap-4 px-4 py-3 rounded-xl transition-all group ${
               activeTab === item.id
-                ? 'bg-accent-sage text-white shadow-lg shadow-accent-sage/20'
-                : 'hover:bg-white/5 text-stone-400 hover:text-white'
+                ? 'bg-accent-sage text-white shadow-lg'
+                : 'hover:bg-white/5 text-stone-400 hover:text-stone-100'
             }`}
+            style={{ 
+               backgroundColor: activeTab === item.id ? 'var(--theme-primary)' : 'transparent',
+               boxShadow: activeTab === item.id ? '0 10px 15px -3px rgba(0,0,0,0.1)' : 'none'
+            }}
           >
             <item.icon size={18} className={`${activeTab === item.id ? 'text-white' : 'opacity-70 group-hover:opacity-100'}`} />
             {!isCollapsed && (
@@ -87,7 +91,10 @@ export const Sidebar: React.FC<SidebarProps> = ({ activeTab, setActiveTab, isCol
 
       <div className="p-8 border-t border-white/5">
         <div className="flex items-center gap-4">
-          <div className="w-10 h-10 rounded-2xl bg-gradient-to-br from-accent-sage to-accent-sage-hover flex items-center justify-center text-xs font-black text-white shrink-0 shadow-lg">
+          <div 
+            className="w-10 h-10 rounded-2xl flex items-center justify-center text-xs font-black text-white shrink-0 shadow-lg"
+            style={{ backgroundColor: 'var(--theme-primary)' }}
+          >
             AU
           </div>
           {!isCollapsed && (
@@ -103,32 +110,14 @@ export const Sidebar: React.FC<SidebarProps> = ({ activeTab, setActiveTab, isCol
 };
 
 export const TopBar: React.FC<{ title: string }> = ({ title }) => {
-  const { settings, updateSettings } = useTheme();
-
   return (
     <header className="h-20 px-10 flex items-center justify-between bg-[var(--theme-card-bg,white)]/80 backdrop-blur-md border-b border-border-base sticky top-0 z-10 transition-colors">
       <div className="flex items-center gap-3">
         <span className="text-[10px] font-black text-text-muted uppercase tracking-[0.2em]">A-Star Portal</span>
-        <span className="text-stone-300">/</span>
+        <span className="text-stone-300 dark:text-stone-700">/</span>
         <span className="text-sm font-black text-text-main uppercase tracking-widest">{title}</span>
       </div>
       <div className="flex items-center gap-8">
-        <div className="flex items-center gap-2 px-4 py-2 bg-bg-main rounded-xl border border-border-base">
-          <Palette size={14} className="text-text-muted mr-1" />
-          <div className="flex gap-1.5">
-            {Object.entries(palettes).map(([name, colors]) => (
-              <button
-                key={name}
-                onClick={() => updateSettings({ palette: name })}
-                className={`w-4 h-4 rounded-full transition-all ring-offset-2 ${
-                  settings.palette === name ? 'ring-2 ring-accent-sage scale-110' : 'hover:scale-110'
-                }`}
-                style={{ backgroundColor: colors.primary }}
-                title={name}
-              />
-            ))}
-          </div>
-        </div>
         <div className="relative hidden md:block">
           <input 
             type="text" 
@@ -137,7 +126,10 @@ export const TopBar: React.FC<{ title: string }> = ({ title }) => {
           />
           <span className="absolute left-3.5 top-1/2 -translate-y-1/2 text-stone-400 text-xs">🔍</span>
         </div>
-        <button className="bg-text-main text-white px-6 py-2.5 text-[10px] font-black uppercase tracking-[0.2em] rounded-xl hover:bg-stone-800 transition-all active:scale-[0.98] shadow-lg shadow-stone-200">
+        <button 
+          className="bg-text-main text-bg-main px-6 py-2.5 text-[10px] font-black uppercase tracking-[0.2em] rounded-xl hover:opacity-90 transition-all active:scale-[0.98] shadow-lg shadow-black/5"
+          style={{ backgroundColor: 'var(--theme-primary)', color: 'white' }}
+        >
           + Create Invoice
         </button>
       </div>

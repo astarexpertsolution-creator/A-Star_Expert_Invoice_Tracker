@@ -9,7 +9,8 @@
   --color-sidebar-bg: var(--theme-sidebar, #0F0F0F);
   --color-accent-sage: var(--theme-primary, #4E605D);
   --color-accent-sage-hover: var(--theme-primary-hover, #3E4E4B);
-  --color-accent-terracotta: #D17D5D;
+  --color-accent-secondary: var(--theme-secondary, #D17D5D);
+  --color-accent-terracotta: var(--theme-secondary, #D17D5D);
   --color-text-main: var(--theme-text, #1A1A1A);
   --color-text-muted: var(--theme-muted, #666666);
   --color-border-base: var(--theme-border, #F0F0F0);
@@ -30,7 +31,7 @@
 
 @layer base {
   body {
-    @apply font-sans antialiased text-text-main bg-bg-main selection:bg-accent-sage/20;
+    @apply font-sans antialiased text-text-main bg-bg-main selection:bg-accent-sage/20 transition-colors duration-300;
   }
 }
 

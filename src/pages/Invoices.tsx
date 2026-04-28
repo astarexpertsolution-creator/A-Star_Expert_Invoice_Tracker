@@ -36,10 +36,10 @@ export const InvoicesPage: React.FC<InvoicesPageProps> = ({ invoices, onCreate, 
 
   return (
     <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 bg-white p-6 rounded-3xl shadow-sm border border-border-base">
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 bg-[var(--theme-card-bg,white)] p-6 rounded-3xl shadow-sm border border-border-base transition-colors duration-300">
         <div className="flex items-center gap-4 flex-1">
           <div className="relative flex-1 max-w-md">
-            <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-stone-300" size={18} />
+            <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-text-muted transition-colors duration-300" size={18} />
             <Input 
               placeholder="Search enterprise billing..." 
               className="pl-12 h-12" 
@@ -48,7 +48,7 @@ export const InvoicesPage: React.FC<InvoicesPageProps> = ({ invoices, onCreate, 
             />
           </div>
           <div className="flex items-center gap-3">
-             <div className="w-10 h-10 bg-bg-main rounded-xl flex items-center justify-center text-text-muted">
+             <div className="w-10 h-10 bg-bg-main rounded-xl flex items-center justify-center text-text-muted transition-colors duration-300 border border-border-base">
                 <Filter size={18} />
              </div>
             <Select 
@@ -72,26 +72,26 @@ export const InvoicesPage: React.FC<InvoicesPageProps> = ({ invoices, onCreate, 
         <div className="overflow-x-auto">
           <table className="w-full text-left border-collapse">
             <thead>
-              <tr className="border-b border-slate-100">
-                <th className="pb-4 font-semibold text-slate-600 text-sm">Invoice #</th>
-                <th className="pb-4 font-semibold text-slate-600 text-sm">Customer</th>
-                <th className="pb-4 font-semibold text-slate-600 text-sm">Invoice Date</th>
-                <th className="pb-4 font-semibold text-slate-600 text-sm">Due Date</th>
-                <th className="pb-4 font-semibold text-slate-600 text-sm">Grand Total</th>
-                <th className="pb-4 font-semibold text-slate-600 text-sm">Status</th>
-                <th className="pb-4 font-semibold text-slate-600 text-sm text-right">Actions</th>
+              <tr className="border-b border-border-base">
+                <th className="pb-4 font-semibold text-text-muted text-sm uppercase tracking-wider">Invoice #</th>
+                <th className="pb-4 font-semibold text-text-muted text-sm uppercase tracking-wider">Customer</th>
+                <th className="pb-4 font-semibold text-text-muted text-sm uppercase tracking-wider">Invoice Date</th>
+                <th className="pb-4 font-semibold text-text-muted text-sm uppercase tracking-wider">Due Date</th>
+                <th className="pb-4 font-semibold text-text-muted text-sm uppercase tracking-wider">Grand Total</th>
+                <th className="pb-4 font-semibold text-text-muted text-sm uppercase tracking-wider text-center">Status</th>
+                <th className="pb-4 font-semibold text-text-muted text-sm uppercase tracking-wider text-right">Actions</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-slate-50">
+            <tbody className="divide-y divide-border-base">
               {filteredInvoices.map((inv) => (
-                <tr key={inv.id} className="hover:bg-slate-50 transition-colors group">
-                  <td className="py-4 font-medium text-slate-900">{inv.invoiceNumber}</td>
-                  <td className="py-4 text-slate-700">{inv.customerName}</td>
-                  <td className="py-4 text-slate-600 text-sm">{inv.invoiceDate}</td>
-                  <td className="py-4 text-slate-600 text-sm">{inv.dueDate}</td>
+                <tr key={inv.id} className="hover:bg-bg-main transition-colors group">
+                  <td className="py-4 font-medium text-text-main">{inv.invoiceNumber}</td>
+                  <td className="py-4 text-text-main font-bold">{inv.customerName}</td>
+                  <td className="py-4 text-text-muted text-sm">{inv.invoiceDate}</td>
+                  <td className="py-4 text-text-muted text-sm">{inv.dueDate}</td>
                   <td className="py-4">
-                    <div className="font-semibold text-slate-900">₹{inv.grandTotal.toLocaleString()}</div>
-                    <div className="text-[10px] text-slate-400">Balance: ₹{(inv.grandTotal - inv.paidAmount).toLocaleString()}</div>
+                    <div className="font-semibold text-text-main">₹{inv.grandTotal.toLocaleString()}</div>
+                    <div className="text-[10px] text-text-muted">Balance: ₹{(inv.grandTotal - inv.paidAmount).toLocaleString()}</div>
                   </td>
                   <td className="py-4">
                     <Badge color={getStatusColor(inv.status)}>{inv.status}</Badge>
