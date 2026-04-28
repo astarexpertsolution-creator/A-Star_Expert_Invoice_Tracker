@@ -37,8 +37,11 @@ export const Sidebar: React.FC<SidebarProps> = ({ activeTab, setActiveTab, isCol
                 exit={{ opacity: 0 }}
                 className="overflow-hidden whitespace-nowrap"
               >
-                <h1 className="text-white font-bold text-xl tracking-tight">Kite<span className="text-stone-400">Invoicing</span></h1>
-                <p className="text-stone-500 text-[10px] uppercase tracking-widest mt-1">Business Portal v1.0</p>
+                <h1 className="text-white font-bold text-xl tracking-tight flex items-center gap-2">
+                  <div className="w-8 h-8 bg-accent-sage rounded flex items-center justify-center text-white text-xs">A*</div>
+                  <span>A-Star<span className="text-stone-400">Solutions</span></span>
+                </h1>
+                <p className="text-stone-500 text-[10px] uppercase tracking-widest mt-1">Expert Scientific Portal</p>
               </motion.div>
             )}
           </AnimatePresence>
@@ -97,7 +100,7 @@ export const TopBar: React.FC<{ title: string }> = ({ title }) => {
   return (
     <header className="h-16 px-8 flex items-center justify-between bg-white border-b border-border-base sticky top-0 z-10">
       <div className="flex items-center gap-2">
-        <span className="text-text-muted text-sm italic capitalize">Invoicing / {title} Overview</span>
+        <span className="text-text-muted text-sm italic capitalize">A-Star / {title} Overview</span>
       </div>
       <div className="flex items-center gap-6">
         <div className="relative hidden md:block">
