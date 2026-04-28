@@ -1,43 +1,71 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Card, Button, Input, Badge, Select } from '../components/UI';
-import { Search, Plus, UserPlus, Phone, Mail, FileText, ChevronRight, MessageSquare } from 'lucide-react';
+import { Search, Plus, UserPlus, Phone, Mail, FileText, ChevronRight, MessageSquare, Loader2 } from 'lucide-react';
 import { Lead, CRMStatus } from '../types';
 import { motion } from 'motion/react';
-
-const INITIAL_LEADS: Lead[] = [
-  {
-    id: 'l1',
-    companyName: 'KMCH Hospital',
-    contactPerson: 'Dr. Ramesh Kumar',
-    email: 'ramesh.kmch@example.com',
-    phone: '9876543210',
-    requirements: 'Bulk procurement of PCR Kits and Bio-safety cabinets.',
-    status: CRMStatus.LEAD,
-    notes: 'Initial inquiry via website. High priority.',
-    createdAt: '2026-04-20',
-  },
-  {
-    id: 'l2',
-    companyName: 'PSG Hospitals',
-    contactPerson: 'Mrs. Shanthi',
-    email: 'shanthi.psg@example.com',
-    phone: '9876500000',
-    requirements: 'Consumables for diagnostic lab.',
-    status: CRMStatus.APPOINTMENT,
-    appointmentDate: '2026-04-30',
-    notes: 'Appointment scheduled for product demo.',
-    createdAt: '2026-04-22',
-  }
-];
+import { db } from '../lib/firebase';
+import { collection, onSnapshot, query, orderBy, addDoc, serverTimestamp } from 'firebase/firestore';
+import { handleFirestoreError, OperationType } from '../lib/firestoreUtils';
 
 export const LeadsPage: React.FC = () => {
-  const [leads, setLeads] = useState<Lead[]>(INITIAL_LEADS);
+  const [leads, setLeads] = useState<Lead[]>([]);
+  const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
+
+  useEffect(() => {
+    const leadsRef = collection(db, 'leads');
+    const q = query(leadsRef, orderBy('createdAt', 'desc'));
+
+    const unsubscribe = onSnapshot(q, (snapshot) => {
+      const leadsData = snapshot.docs.map(doc => ({
+        id: doc.id,
+        ...doc.data()
+      })) as Lead[];
+      setLeads(leadsData);
+      setLoading(false);
+    }, (error) => {
+      handleFirestoreError(error, OperationType.LIST, 'leads');
+      setLoading(false);
+    });
+
+    return () => unsubscribe();
+  }, []);
+
+  const handleAddLead = async () => {
+    const newLead: Omit<Lead, 'id'> = {
+      companyName: 'New Enterprise Lead',
+      contactPerson: 'Lead Contact',
+      email: 'lead@example.com',
+      phone: '0000000000',
+      requirements: 'Enter lead requirements here...',
+      status: CRMStatus.LEAD,
+      notes: '',
+      createdAt: new Date().toISOString()
+    };
+
+    try {
+      await addDoc(collection(db, 'leads'), {
+        ...newLead,
+        createdAt: serverTimestamp() // Preferred over client time
+      });
+    } catch (error) {
+      handleFirestoreError(error, OperationType.CREATE, 'leads');
+    }
+  };
 
   const filteredLeads = leads.filter(l => 
     l.companyName.toLowerCase().includes(searchTerm.toLowerCase()) ||
     l.contactPerson.toLowerCase().includes(searchTerm.toLowerCase())
   );
+
+  if (loading) {
+    return (
+      <div className="h-64 flex flex-col items-center justify-center gap-4">
+        <Loader2 className="w-8 h-8 text-accent-sage animate-spin" />
+        <p className="text-[10px] font-black uppercase tracking-[0.3em] text-stone-300">Synchronizing CRM Database...</p>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6 animate-in fade-in duration-500">
@@ -46,7 +74,7 @@ export const LeadsPage: React.FC = () => {
           <h2 className="text-xl font-bold text-text-main uppercase tracking-tight">Lead Management</h2>
           <p className="text-[10px] text-text-muted font-bold uppercase tracking-widest opacity-60">Gathering & qualifying potential clients</p>
         </div>
-        <Button className="gap-2 h-10 w-full sm:w-auto">
+        <Button className="gap-2 h-10 w-full sm:w-auto" onClick={handleAddLead}>
           <UserPlus size={18} /> Add New Lead
         </Button>
       </div>

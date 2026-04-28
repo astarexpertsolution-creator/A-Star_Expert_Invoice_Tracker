@@ -1,14 +1,61 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Card, Badge, Button, Input, Select } from '../components/UI';
-import { Mail, Phone, MapPin, Truck, Boxes, Plus, Info, Globe } from 'lucide-react';
+import { Mail, Phone, MapPin, Truck, Boxes, Plus, Info, Globe, Loader2 } from 'lucide-react';
 import { Supplier } from '../types';
+import { db } from '../lib/firebase';
+import { collection, onSnapshot, query, addDoc, serverTimestamp } from 'firebase/firestore';
+import { handleFirestoreError, OperationType } from '../lib/firestoreUtils';
 
 export const Suppliers: React.FC = () => {
-  const [suppliers, setSuppliers] = useState<Supplier[]>([
-    { id: 'S1', name: 'GCC Biotech (India) Pvt. Ltd.', code: 'GCC-001', departments: ['Molecular Biology', 'Custom Oligos'], contactPerson: 'Arun Das', email: 'info@gccbiotech.co.in', phone: '+91 9073682428', address: 'Kolkata, WB, India', status: 'Active' },
-    { id: 'S2', name: 'CoSara Diagnostics Pvt. Ltd.', code: 'COS-002', departments: ['Diagnostics', 'RT-PCR'], contactPerson: 'Chirag Patel', email: 'cpatel@cosara.in', phone: '+91 9898047209', address: 'Ahmedabad, Gujarat, India', status: 'Active' },
-    { id: 'S3', name: 'Tarsons Products Limited', code: 'TAR-003', departments: ['Laboratory Plasticware', 'Consumables'], contactPerson: 'S. Ghatak', email: 'info@tarsons.com', phone: '+91 033 3522 0300', address: 'Kolkata, WB, India', status: 'Active' },
-  ]);
+  const [suppliers, setSuppliers] = useState<Supplier[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const suppliersRef = collection(db, 'suppliers');
+    const unsubscribe = onSnapshot(suppliersRef, (snapshot) => {
+      const suppliersData = snapshot.docs.map(doc => ({
+        id: doc.id,
+        ...doc.data()
+      })) as Supplier[];
+      setSuppliers(suppliersData);
+      setLoading(false);
+    }, (error) => {
+      handleFirestoreError(error, OperationType.LIST, 'suppliers');
+      setLoading(false);
+    });
+
+    return () => unsubscribe();
+  }, []);
+
+  const handleOnboardSupplier = async () => {
+    const nextCode = `SUP-${(suppliers.length + 1).toString().padStart(3, '0')}`;
+    const newSupplier = {
+      name: 'New Scientific Partner',
+      code: nextCode,
+      departments: ['General'],
+      contactPerson: 'Vendor Manager',
+      email: 'vendor@example.com',
+      phone: '+91 000 000 0000',
+      address: 'Industrial Zone, State, India',
+      status: 'Active' as const,
+      createdAt: serverTimestamp()
+    };
+
+    try {
+      await addDoc(collection(db, 'suppliers'), newSupplier);
+    } catch (error) {
+      handleFirestoreError(error, OperationType.CREATE, 'suppliers');
+    }
+  };
+
+  if (loading) {
+    return (
+      <div className="h-64 flex flex-col items-center justify-center gap-4">
+        <Loader2 className="w-8 h-8 text-accent-sage animate-spin" />
+        <p className="text-[10px] font-black uppercase tracking-[0.3em] text-stone-300">Resolving Enterprise Master Records...</p>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6 animate-in fade-in duration-500">
@@ -17,7 +64,7 @@ export const Suppliers: React.FC = () => {
           <h2 className="text-xl font-bold text-text-main uppercase tracking-tight">Enterprise Onboarding</h2>
           <p className="text-[10px] text-text-muted font-bold uppercase tracking-widest opacity-60">Register new suppliers & map departments</p>
         </div>
-        <Button variant="primary" className="w-full sm:w-auto h-10 gap-2">
+        <Button variant="primary" className="w-full sm:w-auto h-10 gap-2" onClick={handleOnboardSupplier}>
           <Plus size={18} /> Onboard Supplier
         </Button>
       </div>

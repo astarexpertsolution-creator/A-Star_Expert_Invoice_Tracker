@@ -13,17 +13,25 @@ import { InvoiceCreation } from './pages/InvoiceCreation';
 import { InvoiceDetails } from './pages/InvoiceDetails';
 import { Login } from './pages/Login';
 import { SAMPLE_PRODUCTS, SAMPLE_CUSTOMERS, SAMPLE_INVOICES } from './constants';
-import { Product, Customer, Invoice, PaymentStatus, PaymentEntry } from './types';
+import { Product, Customer, Invoice, PaymentStatus } from './types';
 import { Card, Button, Input, Select } from './components/UI';
-import { X } from 'lucide-react';
+import { X, Loader2 } from 'lucide-react';
 import { AnimatePresence, motion } from 'motion/react';
+import { onAuthStateChanged, User } from 'firebase/auth';
+import { auth } from './lib/firebase';
 
 export default function App() {
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [user, setUser] = useState<User | null>(null);
+  const [authLoading, setAuthLoading] = useState(true);
   const [activeTab, setActiveTab] = useState('dashboard');
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(window.innerWidth < 1024);
 
   useEffect(() => {
+    const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
+      setUser(currentUser);
+      setAuthLoading(false);
+    });
+
     const handleResize = () => {
       if (window.innerWidth < 1024) {
         setIsSidebarCollapsed(true);
@@ -32,7 +40,10 @@ export default function App() {
       }
     };
     window.addEventListener('resize', handleResize);
-    return () => window.removeEventListener('resize', handleResize);
+    return () => {
+      unsubscribe();
+      window.removeEventListener('resize', handleResize);
+    };
   }, []);
   
   // Data State
@@ -50,8 +61,17 @@ export default function App() {
   const [paymentDate, setPaymentDate] = useState(new Date().toISOString().split('T')[0]);
   const [paymentMode, setPaymentMode] = useState('Bank Transfer');
 
-  if (!isAuthenticated) {
-    return <Login onLogin={() => setIsAuthenticated(true)} />;
+  if (authLoading) {
+    return (
+      <div className="min-h-screen bg-bg-main flex flex-col items-center justify-center gap-4">
+        <Loader2 className="w-10 h-10 text-accent-sage animate-spin" />
+        <p className="text-[10px] font-black uppercase tracking-[0.4em] text-stone-300">Initializing Enterprise Portal</p>
+      </div>
+    );
+  }
+
+  if (!user) {
+    return <Login onLogin={() => {}} />;
   }
 
   const handleCreateInvoice = (newInvoiceData: Omit<Invoice, 'id' | 'createdAt'>) => {

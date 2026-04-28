@@ -1,0 +1,134 @@
+{
+  "entities": {
+    "Supplier": {
+      "title": "Supplier",
+      "description": "Enterprise supplier details",
+      "type": "object",
+      "properties": {
+        "name": { "type": "string" },
+        "code": { "type": "string" },
+        "departments": { "type": "array", "items": { "type": "string" } },
+        "contactPerson": { "type": "string" },
+        "email": { "type": "string" },
+        "phone": { "type": "string" },
+        "address": { "type": "string" },
+        "status": { "type": "string", "enum": ["Active", "Inactive"] }
+      },
+      "required": ["name", "code", "status"]
+    },
+    "Product": {
+      "title": "Product Master",
+      "description": "Master list of products from all suppliers",
+      "type": "object",
+      "properties": {
+        "name": { "type": "string" },
+        "sku": { "type": "string" },
+        "category": { "type": "string" },
+        "supplierId": { "type": "string" },
+        "mrp": { "type": "number" },
+        "baseMargin": { "type": "number" },
+        "unitPrice": { "type": "number" },
+        "taxPercentage": { "type": "number" },
+        "specifications": { "type": "string" },
+        "status": { "type": "string", "enum": ["Active", "Inactive"] }
+      },
+      "required": ["name", "sku", "category", "unitPrice", "taxPercentage", "status"]
+    },
+    "Lead": {
+      "title": "Lead",
+      "description": "Sales lead tracking",
+      "type": "object",
+      "properties": {
+        "companyName": { "type": "string" },
+        "contactPerson": { "type": "string" },
+        "email": { "type": "string" },
+        "phone": { "type": "string" },
+        "requirements": { "type": "string" },
+        "status": { "type": "string", "enum": ["Lead", "Appointment", "Onboarded"] },
+        "notes": { "type": "string" },
+        "assignedTo": { "type": "string" },
+        "appointmentDate": { "type": "string" },
+        "createdAt": { "type": "string" }
+      },
+      "required": ["companyName", "contactPerson", "status", "createdAt"]
+    },
+    "Customer": {
+      "title": "Customer",
+      "description": "Onboarded customer details",
+      "type": "object",
+      "properties": {
+        "name": { "type": "string" },
+        "code": { "type": "string" },
+        "contactPerson": { "type": "string" },
+        "mobile": { "type": "string" },
+        "email": { "type": "string" },
+        "billingAddress": { "type": "string" },
+        "taxNumber": { "type": "string" },
+        "status": { "type": "string", "enum": ["Active", "Inactive"] },
+        "leadId": { "type": "string" }
+      },
+      "required": ["name", "code", "status"]
+    },
+    "PurchaseOrder": {
+      "title": "Purchase Order",
+      "description": "Customer purchase orders",
+      "type": "object",
+      "properties": {
+        "poNumber": { "type": "string" },
+        "customerId": { "type": "string" },
+        "customerName": { "type": "string" },
+        "poDate": { "type": "string" },
+        "totalAmount": { "type": "number" },
+        "status": { "type": "string", "enum": ["Pending", "Converted", "Cancelled"] },
+        "documentUrl": { "type": "string" }
+      },
+      "required": ["poNumber", "customerId", "poDate", "status"]
+    },
+    "Invoice": {
+      "title": "Invoice",
+      "description": "Sales invoice details",
+      "type": "object",
+      "properties": {
+        "invoiceNumber": { "type": "string" },
+        "invoiceDate": { "type": "string" },
+        "dueDate": { "type": "string" },
+        "customerId": { "type": "string" },
+        "customerName": { "type": "string" },
+        "subtotal": { "type": "number" },
+        "taxTotal": { "type": "number" },
+        "grandTotal": { "type": "number" },
+        "paidAmount": { "type": "number" },
+        "status": { "type": "string" },
+        "dispatchStatus": { "type": "string" },
+        "createdAt": { "type": "string" }
+      },
+      "required": ["invoiceNumber", "customerId", "grandTotal", "status", "createdAt"]
+    }
+  },
+  "firestore": {
+    "suppliers": {
+      "schema": "Supplier",
+      "description": "List of all distribution suppliers"
+    },
+    "products": {
+      "schema": "Product",
+      "description": "Master product catalog"
+    },
+    "leads": {
+      "schema": "Lead",
+      "description": "CRM leads"
+    },
+    "customers": {
+      "schema": "Customer",
+      "description": "Active customers"
+    },
+    "purchaseOrders": {
+      "schema": "PurchaseOrder",
+      "description": "Customer uploaded or manual POs"
+    },
+    "invoices": {
+      "schema": "Invoice",
+      "description": "Financial invoices"
+    }
+  }
+}

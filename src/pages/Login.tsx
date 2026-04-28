@@ -1,18 +1,27 @@
 import React, { useState } from 'react';
-import { Card, Button, Input } from '../components/UI';
-import { Lock, Mail, ChevronRight } from 'lucide-react';
+import { Card, Button } from '../components/UI';
+import { ChevronRight } from 'lucide-react';
 import { motion } from 'motion/react';
+import { signInWithPopup, GoogleAuthProvider } from 'firebase/auth';
+import { auth } from '../lib/firebase';
 
 export const Login: React.FC<{ onLogin: () => void }> = ({ onLogin }) => {
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
+  const handleGoogleLogin = async () => {
     setLoading(true);
-    setTimeout(() => {
-      setLoading(false);
+    setError(null);
+    try {
+      const provider = new GoogleAuthProvider();
+      await signInWithPopup(auth, provider);
       onLogin();
-    }, 1000);
+    } catch (err) {
+      console.error('Login error:', err);
+      setError('A-Star authentication failed. Please check your credentials.');
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -44,40 +53,32 @@ export const Login: React.FC<{ onLogin: () => void }> = ({ onLogin }) => {
           <p className="text-[10px] font-black uppercase tracking-[0.4em] text-stone-300">Enterprise Scientific Access</p>
         </div>
 
-        <Card className="!rounded-[2.5rem] p-4">
-          <div className="p-4">
-            <form onSubmit={handleSubmit} className="space-y-8">
-              <div className="space-y-6">
-                <Input 
-                  label="Corporate Identity" 
-                  type="email" 
-                  placeholder="name@astarsolutions.com" 
-                  required 
-                  defaultValue="admin@astarsolutions.com"
-                  className="h-14 !rounded-2xl"
-                />
-                <Input 
-                  label="Security Key" 
-                  type="password" 
-                  placeholder="••••••••" 
-                  required 
-                  defaultValue="password123"
-                  className="h-14 !rounded-2xl"
-                />
-              </div>
+        <Card className="!rounded-[2.5rem] p-8">
+          <div className="space-y-8 text-center">
+            <div className="space-y-4">
+              <h1 className="text-2xl font-black text-text-main uppercase tracking-tighter">System Access</h1>
+              <p className="text-sm text-text-muted">Initialize enterprise authentication protocol to access the Distributor Portal.</p>
+            </div>
 
-              <div className="flex items-center justify-between">
-                <label className="flex items-center gap-3 cursor-pointer text-text-muted">
-                  <input type="checkbox" className="w-5 h-5 rounded-lg border-2 border-border-base text-accent-sage focus:ring-accent-sage/20 transition-all" />
-                  <span className="text-xs font-bold uppercase tracking-wider">Persist Session</span>
-                </label>
-                <a href="#" className="text-[10px] font-black uppercase tracking-widest text-accent-sage hover:text-accent-sage-hover transition-colors">Credential Recovery</a>
+            {error && (
+              <div className="p-4 bg-red-50 text-red-600 rounded-2xl text-[10px] font-black uppercase tracking-widest border border-red-100">
+                {error}
               </div>
+            )}
 
-              <Button variant="primary" type="submit" className="w-full h-16 text-xs font-black uppercase tracking-[0.3em] !rounded-[1.25rem] shadow-xl" isLoading={loading}>
-                Initialize Access <ChevronRight size={18} className="ml-2" />
-              </Button>
-            </form>
+            <Button 
+              variant="primary" 
+              onClick={handleGoogleLogin} 
+              className="w-full h-16 text-xs font-black uppercase tracking-[0.3em] !rounded-[1.25rem] shadow-xl gap-3" 
+              isLoading={loading}
+            >
+              <img src="https://www.google.com/favicon.ico" className="w-5 h-5 invert" alt="Google" />
+              Sign in with Corporate Account <ChevronRight size={18} className="ml-2" />
+            </Button>
+
+            <p className="text-[10px] font-bold text-stone-400 uppercase tracking-widest">
+              Authorized Personnel Only
+            </p>
           </div>
         </Card>
 
