@@ -30,34 +30,34 @@ export const Dashboard: React.FC<{ invoices: Invoice[] }> = ({ invoices }) => {
   };
 
   return (
-    <div className="space-y-8 animate-in fade-in duration-500">
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-6">
+    <div className="space-y-6 md:space-y-8 animate-in fade-in duration-500">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6">
         {stats.slice(0, 4).map((stat, idx) => (
-          <div key={idx} className="bg-[var(--theme-card-bg,white)] border border-border-base rounded-3xl p-8 shadow-sm hover:shadow-md transition-all">
+          <div key={idx} className="bg-[var(--theme-card-bg,white)] border border-border-base rounded-3xl p-6 md:p-8 shadow-sm hover:shadow-md transition-all">
             <p className="text-[10px] font-black text-text-muted uppercase tracking-[0.2em] mb-2">{stat.label}</p>
             <div className="flex items-center justify-between">
-              <p className={`text-4xl font-black ${stat.color} tracking-tighter`}>{stat.value}</p>
+              <p className={`text-3xl md:text-4xl font-black ${stat.color} tracking-tighter`}>{stat.value}</p>
               <div className="w-10 h-10 bg-bg-main rounded-xl flex items-center justify-center text-text-muted transition-colors">
                 <FileText size={20} />
               </div>
             </div>
           </div>
         ))}
-        <div className="col-span-full lg:col-span-2 grid grid-cols-2 gap-6">
-           <div className="bg-text-main dark:bg-zinc-900 border border-text-main dark:border-zinc-800 rounded-3xl p-8 text-white shadow-xl shadow-black/5 transition-colors">
+        <div className="col-span-full grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-2 gap-4 md:gap-6">
+           <div className="bg-text-main dark:bg-zinc-900 border border-text-main dark:border-zinc-800 rounded-3xl p-6 md:p-8 text-white shadow-xl shadow-black/5 transition-colors">
             <p className="text-[10px] font-black text-stone-400 dark:text-stone-500 uppercase tracking-[0.2em] mb-2">Total Value</p>
-            <p className="text-3xl font-black tracking-tighter">₹{(totalAmount / 1000).toFixed(1)}k</p>
+            <p className="text-2xl md:text-3xl font-black tracking-tighter">₹{(totalAmount / 1000).toFixed(1)}k</p>
             <div className="mt-4 flex items-center gap-2">
               <div className="w-6 h-1 bg-emerald-500 rounded-full"></div>
               <p className="text-[10px] uppercase font-bold text-stone-500 dark:text-stone-600">Collected: ₹{(totalPaid / 1000).toFixed(1)}k</p>
             </div>
           </div>
-          <div className="bg-accent-sage border border-accent-sage rounded-3xl p-8 text-white shadow-xl shadow-black/5 transition-colors">
-            <p className="text-[10px] font-black text-white/60 uppercase tracking-[0.2em] mb-2">Inventory Value</p>
-            <p className="text-3xl font-black tracking-tighter">₹{(pendingAmount / 1000).toFixed(1)}k</p>
+          <div className="bg-accent-sage border border-accent-sage rounded-3xl p-6 md:p-8 text-white shadow-xl shadow-black/5 transition-colors">
+            <p className="text-[10px] font-black text-white/60 uppercase tracking-[0.2em] mb-2">Open PO Value</p>
+            <p className="text-2xl md:text-3xl font-black tracking-tighter">₹{(pendingAmount * 1.2 / 1000).toFixed(1)}k</p>
              <div className="mt-4 flex items-center gap-2">
               <div className="w-6 h-1 bg-white/30 rounded-full"></div>
-              <p className="text-[10px] uppercase font-bold text-white/60">Pending Audit</p>
+              <p className="text-[10px] uppercase font-bold text-white/60">Supplier Fulfillment Pending</p>
             </div>
           </div>
         </div>
@@ -105,10 +105,10 @@ export const Dashboard: React.FC<{ invoices: Invoice[] }> = ({ invoices }) => {
         <div className="space-y-6">
           <div className="grid grid-cols-1 gap-4">
               <button className="w-full bg-[var(--theme-card-bg,white)] hover:bg-bg-main border border-border-base rounded-2xl p-6 flex items-center gap-4 transition-all group shadow-sm active:scale-[0.98]">
-                <div className="w-12 h-12 bg-indigo-50 dark:bg-indigo-900/20 rounded-xl flex items-center justify-center text-xl group-hover:scale-110 transition-transform">📦</div>
+                <div className="w-12 h-12 bg-indigo-50 dark:bg-indigo-900/20 rounded-xl flex items-center justify-center text-xl group-hover:scale-110 transition-transform">🎯</div>
                 <div className="text-left">
-                  <span className="block text-xs font-black text-text-main uppercase tracking-widest">Add Product</span>
-                  <span className="text-[10px] text-text-muted font-bold uppercase mt-0.5">Catalog Entry</span>
+                  <span className="block text-xs font-black text-text-main uppercase tracking-widest">Add Lead</span>
+                  <span className="text-[10px] text-text-muted font-bold uppercase mt-0.5">Opportunity Entry</span>
                 </div>
               </button>
               <button className="w-full bg-[var(--theme-card-bg,white)] hover:bg-bg-main border border-border-base rounded-2xl p-6 flex items-center gap-4 transition-all group shadow-sm active:scale-[0.98]">

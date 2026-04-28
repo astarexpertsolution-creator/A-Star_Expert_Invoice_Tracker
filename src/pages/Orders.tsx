@@ -1,99 +1,85 @@
 import React from 'react';
 import { Card, Badge, Button } from '../components/UI';
-import { ShoppingBag, Clock, CheckCircle2 } from 'lucide-react';
+import { ShoppingBag, Clock, CheckCircle2, FileUp, FileText, ArrowRight } from 'lucide-react';
+import { PurchaseOrder } from '../types';
 
 export const Orders: React.FC = () => {
-  const orders = [
-    { id: 'ORD-2024-001', customer: 'City Hospital', date: '2024-03-25', amount: 15400.00, status: 'Processing' },
-    { id: 'ORD-2024-002', customer: 'General Clinic', date: '2024-03-24', amount: 3200.50, status: 'Shipped' },
-    { id: 'ORD-2024-003', customer: 'Lab Solutions', date: '2024-03-23', amount: 890.00, status: 'Delivered' },
-    { id: 'ORD-2024-004', customer: 'St. Mary’s Center', date: '2024-03-22', amount: 45600.00, status: 'Pending' },
+  const purchaseOrders: PurchaseOrder[] = [
+    { id: 'po-01', poNumber: 'PO/2026/KMCH/001', customerId: 'c1', customerName: 'KMCH Hospital', poDate: '2026-04-25', items: [], totalAmount: 145000, status: 'Pending' },
+    { id: 'po-02', poNumber: 'PO/2026/PSG/042', customerId: 'c2', customerName: 'PSG Hospitals', poDate: '2026-04-26', items: [], totalAmount: 78200, status: 'Converted' },
+    { id: 'po-03', poNumber: 'PO/2026/CITY/009', customerId: 'c3', customerName: 'City Clinic', poDate: '2026-04-27', items: [], totalAmount: 12500, status: 'Pending' },
   ];
-
-  const getStatusColor = (status: string) => {
-    switch (status) {
-      case 'Delivered': return 'green';
-      case 'Shipped': return 'blue';
-      case 'Processing': return 'yellow';
-      default: return 'slate';
-    }
-  };
 
   return (
     <div className="space-y-6 animate-in fade-in duration-500">
-      <div className="flex justify-between items-center">
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div className="flex items-center gap-3">
-          <div className="p-2 bg-accent-sage text-white rounded-lg">
+          <div className="p-3 bg-accent-sage text-white rounded-xl shadow-lg shadow-accent-sage/20">
             <ShoppingBag size={20} />
           </div>
-          <h2 className="text-xl font-bold text-text-main">Order Management</h2>
+          <div>
+            <h2 className="text-xl font-bold text-text-main uppercase tracking-tight">Purchase Order Desk</h2>
+            <p className="text-[10px] text-text-muted font-bold uppercase tracking-widest opacity-60">Mapping customer requirements to fulfillment</p>
+          </div>
         </div>
-        <div className="flex gap-2">
-          <Button variant="outline" size="sm">Export</Button>
-          <Button variant="primary" size="sm">+ New Order</Button>
+        <div className="flex gap-2 w-full sm:w-auto">
+          <Button variant="outline" className="flex-1 sm:flex-none h-10 gap-2 font-bold text-[10px] uppercase tracking-widest">
+            <FileUp size={16} /> Upload PO
+          </Button>
+          <Button variant="primary" className="flex-1 sm:flex-none h-10 gap-2 font-bold text-[10px] uppercase tracking-widest">
+            + Manual PO
+          </Button>
         </div>
       </div>
 
-      <Card>
-        <div className="overflow-x-auto">
-          <table className="w-full text-left">
-            <thead>
-              <tr className="border-b border-border-base">
-                <th className="px-6 py-4 text-[11px] font-bold text-text-muted uppercase tracking-wider">Order ID</th>
-                <th className="px-6 py-4 text-[11px] font-bold text-text-muted uppercase tracking-wider">Customer</th>
-                <th className="px-6 py-4 text-[11px] font-bold text-text-muted uppercase tracking-wider">Date</th>
-                <th className="px-6 py-4 text-[11px] font-bold text-text-muted uppercase tracking-wider">Amount</th>
-                <th className="px-6 py-4 text-[11px] font-bold text-text-muted uppercase tracking-wider text-right">Status</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-border-base">
-              {orders.map((order) => (
-                <tr key={order.id} className="hover:bg-bg-main transition-colors text-[13px]">
-                  <td className="px-6 py-4 font-bold text-accent-sage">{order.id}</td>
-                  <td className="px-6 py-4 font-medium text-text-main">{order.customer}</td>
-                  <td className="px-6 py-4 text-text-muted">{order.date}</td>
-                  <td className="px-6 py-4 font-semibold text-text-main">₹{order.amount.toLocaleString()}</td>
-                  <td className="px-6 py-4 text-right">
-                    <Badge color={getStatusColor(order.status)}>{order.status}</Badge>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      </Card>
-
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6 pt-4">
-        <Card title="Activity Feed" subtitle="Recent warehouse updates" className="flex-1">
-          <div className="space-y-6">
-            {[1, 2, 3].map(i => (
-              <div key={i} className="flex gap-4 relative">
-                {i < 3 && <div className="absolute left-[11px] top-6 bottom-[-24px] w-[2px] bg-border-base"></div>}
-                <div className="w-6 h-6 rounded-full bg-accent-sage/10 flex items-center justify-center shrink-0">
-                  <div className="w-2 h-2 rounded-full bg-accent-sage"></div>
+      <div className="grid grid-cols-1 gap-4">
+        {purchaseOrders.map((po) => (
+          <Card key={po.id} className="relative group">
+            <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
+              <div className="space-y-1">
+                <div className="flex items-center gap-3">
+                   <h3 className="text-lg font-black text-text-main uppercase tracking-tighter">{po.poNumber}</h3>
+                   <Badge color={po.status === 'Converted' ? 'green' : 'yellow'}>{po.status}</Badge>
                 </div>
-                <div className="space-y-1">
-                   <p className="text-sm text-text-main font-medium">Order #ORD-2024-00{i} packed by Warehouse B</p>
-                   <p className="text-xs text-text-muted">2 hours ago</p>
-                </div>
+                <p className="text-sm text-text-muted font-medium">{po.customerName} • Received on {po.poDate}</p>
               </div>
-            ))}
+
+              <div className="flex flex-col md:items-end">
+                <p className="text-[10px] font-black text-text-muted uppercase tracking-widest opacity-60">Est. Order Value</p>
+                <p className="text-2xl font-black text-text-main">₹{po.totalAmount.toLocaleString()}</p>
+              </div>
+
+              <div className="flex gap-2">
+                <Button variant="outline" size="sm" className="h-10 px-4 text-[10px] font-black uppercase tracking-widest">
+                  View Document
+                </Button>
+                {po.status === 'Pending' && (
+                  <Button variant="primary" size="sm" className="h-10 px-4 text-[10px] font-black uppercase tracking-widest gap-2">
+                    <FileText size={14} /> Convert to Invoice <ArrowRight size={14} />
+                  </Button>
+                )}
+              </div>
+            </div>
+          </Card>
+        ))}
+      </div>
+
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 pt-4">
+        <Card title="Conversion Analytics" subtitle="PO to Invoice Velocity">
+          <div className="h-32 flex items-center justify-center border-2 border-dashed border-border-base rounded-2xl">
+             <p className="text-xs text-text-muted italic font-bold uppercase tracking-widest">Historical conversion chart module</p>
           </div>
         </Card>
-
-        <Card title="Delivery Performance" subtitle="fulfillment success rate" className="flex-1">
-          <div className="h-48 flex items-center justify-center">
-            <div className="text-center">
-              <div className="relative inline-flex mb-2">
-                <svg className="w-24 h-24">
-                  <circle className="text-border-base" strokeWidth="6" stroke="currentColor" fill="transparent" r="40" cx="48" cy="48" />
-                  <circle className="text-accent-sage" strokeWidth="6" strokeDasharray={251.2} strokeDashoffset={25.12} strokeLinecap="round" stroke="currentColor" fill="transparent" r="40" cx="48" cy="48" />
-                </svg>
-                <span className="absolute inset-0 flex items-center justify-center text-lg font-bold text-text-main">90%</span>
-              </div>
-              <p className="text-sm font-medium text-text-muted uppercase tracking-widest">On-time Delivery</p>
-            </div>
-          </div>
+        <Card title="Open Liabilities" subtitle="Unfulfilled Purchase Orders">
+           <div className="space-y-4">
+             <div className="flex justify-between items-center p-3 bg-bg-main rounded-xl">
+                <span className="text-xs font-bold text-text-main">Total Open POs</span>
+                <span className="text-lg font-black text-accent-sage">₹225,000</span>
+             </div>
+             <p className="text-[10px] text-text-muted font-bold uppercase tracking-widest leading-relaxed">
+               Average aging of open POs: <span className="text-text-main">3.2 Days</span>
+             </p>
+           </div>
         </Card>
       </div>
     </div>

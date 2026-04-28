@@ -166,8 +166,8 @@ export const CustomizePage: React.FC = () => {
           </Card>
         </div>
 
-        <div className="space-y-8 sticky top-28 self-start">
-           <Card className="bg-sidebar-bg text-white border-none p-10 h-full flex flex-col justify-between overflow-hidden relative shadow-2xl">
+        <div className="space-y-8 lg:sticky lg:top-28 self-start">
+           <Card className="bg-sidebar-bg text-white border-none p-6 md:p-10 h-full flex flex-col justify-between overflow-hidden relative shadow-2xl min-h-[300px] md:min-h-[500px]">
               <div className="relative z-10">
                 <div className="flex items-center gap-3 mb-12">
                    <div className="p-4 bg-white/10 rounded-2xl backdrop-blur-md">

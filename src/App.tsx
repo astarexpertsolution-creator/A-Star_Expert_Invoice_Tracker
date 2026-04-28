@@ -4,9 +4,10 @@ import { Dashboard } from './pages/Dashboard';
 import { ProductsPage } from './pages/Products';
 import { CustomersPage } from './pages/Customers';
 import { InvoicesPage } from './pages/Invoices';
-import { Inventory } from './pages/Inventory';
 import { Orders } from './pages/Orders';
 import { Suppliers } from './pages/Suppliers';
+import { LeadsPage } from './pages/Leads';
+import { AppointmentsPage } from './pages/Appointments';
 import { CustomizePage } from './pages/Customize';
 import { InvoiceCreation } from './pages/InvoiceCreation';
 import { InvoiceDetails } from './pages/InvoiceDetails';
@@ -20,7 +21,19 @@ import { AnimatePresence, motion } from 'motion/react';
 export default function App() {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [activeTab, setActiveTab] = useState('dashboard');
-  const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
+  const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(window.innerWidth < 1024);
+
+  useEffect(() => {
+    const handleResize = () => {
+      if (window.innerWidth < 1024) {
+        setIsSidebarCollapsed(true);
+      } else {
+        setIsSidebarCollapsed(false);
+      }
+    };
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
   
   // Data State
   const [products, setProducts] = useState<Product[]>(SAMPLE_PRODUCTS);
@@ -108,6 +121,10 @@ export default function App() {
             onDelete={(id) => setProducts(products.filter(p => p.id !== id))}
           />
         );
+      case 'leads':
+        return <LeadsPage />;
+      case 'appointments':
+        return <AppointmentsPage />;
       case 'customers':
         return (
           <CustomersPage 
@@ -131,8 +148,6 @@ export default function App() {
             }}
           />
         );
-      case 'inventory':
-        return <Inventory />;
       case 'orders':
         return <Orders />;
       case 'suppliers':
@@ -163,9 +178,12 @@ export default function App() {
         setIsCollapsed={setIsSidebarCollapsed}
       />
       
-      <main className="flex-1 min-w-0">
-        <TopBar title={isCreatingInvoice ? 'Create Invoice' : viewingInvoice ? `Invoice: ${viewingInvoice.invoiceNumber}` : activeTab} />
-        <div className="p-8 max-w-[1600px] mx-auto">
+      <main className="flex-1 min-w-0 flex flex-col h-screen">
+        <TopBar 
+          title={isCreatingInvoice ? 'Create Invoice' : viewingInvoice ? `Invoice: ${viewingInvoice.invoiceNumber}` : activeTab} 
+          onMenuClick={() => setIsSidebarCollapsed(!isSidebarCollapsed)}
+        />
+        <div className="flex-1 overflow-y-auto p-4 md:p-8 lg:p-12 max-w-[1600px] mx-auto w-full">
           {renderContent()}
         </div>
       </main>

@@ -21,80 +21,80 @@ export const InvoiceDetails: React.FC<InvoiceDetailsProps> = ({ invoice, onBack 
 
   return (
     <div className="space-y-8 pb-12 animate-in fade-in zoom-in-95 duration-500">
-      <div className="flex items-center justify-between">
-        <button onClick={onBack} className="flex items-center gap-2 text-slate-500 hover:text-slate-800 transition-colors">
+      <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-4">
+        <button onClick={onBack} className="flex items-center gap-2 text-text-muted hover:text-text-main transition-colors text-sm font-bold">
           <ArrowLeft size={18} /> Back to Invoices
         </button>
         <div className="flex gap-3">
-          <Button variant="outline" className="gap-2">
-            <Download size={18} /> Download PDF
+          <Button variant="outline" className="gap-2 flex-1 sm:flex-none">
+            <Download size={18} /> PDF
           </Button>
-          <Button variant="outline" className="gap-2">
+          <Button variant="outline" className="gap-2 flex-1 sm:flex-none">
             <Printer size={18} /> Print
           </Button>
         </div>
       </div>
 
-      <div className="bg-white rounded-2xl shadow-xl border border-slate-200 overflow-hidden max-w-4xl mx-auto">
+      <div className="bg-[var(--theme-card-bg,white)] rounded-2xl shadow-xl border border-border-base overflow-hidden max-w-4xl mx-auto transition-colors">
         {/* Header Section */}
-        <div className="p-8 md:p-12 border-b border-slate-100 flex flex-col md:flex-row justify-between items-start md:items-center gap-6 bg-slate-50/30">
+        <div className="p-6 md:p-12 border-b border-border-base flex flex-col md:flex-row justify-between items-start md:items-center gap-6 bg-bg-main/30">
           <div className="space-y-1">
-            <div className="flex items-center gap-3">
-              <h2 className="text-3xl font-bold text-slate-900">{invoice.invoiceNumber}</h2>
+            <div className="flex flex-wrap items-center gap-3">
+              <h2 className="text-2xl md:text-3xl font-bold text-text-main uppercase tracking-tighter">{invoice.invoiceNumber}</h2>
               <Badge color={getStatusColor(invoice.status)}>{invoice.status}</Badge>
             </div>
-            <p className="text-slate-500">Issued on {invoice.invoiceDate}</p>
+            <p className="text-text-muted text-sm uppercase font-bold tracking-widest opacity-60">Issued on {invoice.invoiceDate}</p>
           </div>
-          <div className="text-right">
-            <p className="text-sm font-medium text-slate-500 uppercase tracking-wider">Amount Due</p>
-            <p className="text-4xl font-black text-indigo-600">₹{(invoice.grandTotal - invoice.paidAmount).toLocaleString()}</p>
-            <p className="text-slate-400 text-xs mt-1">Due by {invoice.dueDate}</p>
+          <div className="text-left md:text-right w-full md:w-auto">
+            <p className="text-[10px] font-bold text-text-muted uppercase tracking-widest mb-1 opacity-60">Amount Due</p>
+            <p className="text-3xl md:text-4xl font-black text-text-main tracking-tighter">₹{(invoice.grandTotal - invoice.paidAmount).toLocaleString()}</p>
+            <p className="text-text-muted text-[10px] font-bold uppercase tracking-wider mt-1">Due by {invoice.dueDate}</p>
           </div>
         </div>
 
-        <div className="p-8 md:p-12">
+        <div className="p-6 md:p-12">
           {/* Address Grid */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-12 mb-12">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-8 md:gap-12 mb-12">
             <div>
-              <p className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-4">From</p>
+              <p className="text-[10px] font-bold text-text-muted uppercase tracking-widest mb-4 opacity-60">From</p>
               <div className="space-y-1">
-                <p className="font-bold text-slate-900 text-lg">My Small Business Name</p>
-                <p className="text-slate-600">123 Business Avenue, Suite 100</p>
-                <p className="text-slate-600">City, State, ZIP Code</p>
-                <p className="text-slate-600">contact@mybusiness.com</p>
+                <p className="font-bold text-text-main text-lg uppercase tracking-tight">A-Star Solutions</p>
+                <p className="text-text-muted text-sm">Industrial Hub, Block 4</p>
+                <p className="text-text-muted text-sm">Enterprise City, 10001</p>
+                <p className="text-text-muted text-sm">billing@a-star.com</p>
               </div>
             </div>
             <div>
-              <p className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-4">Bill To</p>
+              <p className="text-[10px] font-bold text-text-muted uppercase tracking-widest mb-4 opacity-60">Bill To</p>
               <div className="space-y-1">
-                <p className="font-bold text-slate-900 text-lg">{invoice.customerName}</p>
-                <p className="text-slate-600">{invoice.billingAddress}</p>
-                <p className="text-slate-600">Customer Email Placeholder</p>
+                <p className="font-bold text-text-main text-lg uppercase tracking-tight">{invoice.customerName}</p>
+                <p className="text-text-muted text-sm">{invoice.billingAddress}</p>
+                <p className="text-text-muted text-sm">Customer Records Linked</p>
               </div>
             </div>
           </div>
 
           {/* Table */}
-          <div className="overflow-hidden border border-slate-100 rounded-xl mb-12">
-            <table className="w-full text-left">
-              <thead className="bg-slate-50">
+          <div className="overflow-x-auto -mx-6 md:mx-0 border border-border-base rounded-xl mb-12">
+            <table className="w-full text-left min-w-[600px]">
+              <thead className="bg-bg-main">
                 <tr>
-                  <th className="px-6 py-4 text-xs font-bold text-slate-500 uppercase">Item Description</th>
-                  <th className="px-6 py-4 text-xs font-bold text-slate-500 uppercase text-center w-24">Qty</th>
-                  <th className="px-6 py-4 text-xs font-bold text-slate-500 uppercase text-right w-32">Unit Price</th>
-                  <th className="px-6 py-4 text-xs font-bold text-slate-500 uppercase text-right w-32">Total</th>
+                  <th className="px-6 py-4 text-[10px] font-bold text-text-muted uppercase tracking-widest">Item Description</th>
+                  <th className="px-6 py-4 text-[10px] font-bold text-text-muted uppercase tracking-widest text-center w-24">Qty</th>
+                  <th className="px-6 py-4 text-[10px] font-bold text-text-muted uppercase tracking-widest text-right w-32">Unit Price</th>
+                  <th className="px-6 py-4 text-[10px] font-bold text-text-muted uppercase tracking-widest text-right w-32">Total</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-slate-50">
+              <tbody className="divide-y divide-border-base">
                 {invoice.items.map((item, idx) => (
                   <tr key={idx}>
                     <td className="px-6 py-4">
-                      <p className="font-medium text-slate-900">{item.productName}</p>
-                      <p className="text-xs text-slate-500">Tax: {item.taxPercentage}% included</p>
+                      <p className="font-bold text-text-main text-sm">{item.productName}</p>
+                      <p className="text-[10px] text-text-muted font-bold uppercase tracking-wider opacity-60">Tax: {item.taxPercentage}% included</p>
                     </td>
-                    <td className="px-6 py-4 text-center text-slate-600">{item.quantity}</td>
-                    <td className="px-6 py-4 text-right text-slate-600">₹{item.unitPrice.toFixed(2)}</td>
-                    <td className="px-6 py-4 text-right font-semibold text-slate-900">₹{item.lineTotal.toFixed(2)}</td>
+                    <td className="px-6 py-4 text-center text-text-main font-semibold">{item.quantity}</td>
+                    <td className="px-6 py-4 text-right text-text-muted text-sm">₹{item.unitPrice.toFixed(2)}</td>
+                    <td className="px-6 py-4 text-right font-black text-text-main">₹{item.lineTotal.toFixed(2)}</td>
                   </tr>
                 ))}
               </tbody>
@@ -102,32 +102,32 @@ export const InvoiceDetails: React.FC<InvoiceDetailsProps> = ({ invoice, onBack 
           </div>
 
           {/* Summary Section */}
-          <div className="flex flex-col md:flex-row justify-between gap-12 pt-8 border-t-2 border-slate-50">
+          <div className="flex flex-col md:flex-row justify-between gap-12 pt-8 border-t border-border-base">
             <div className="flex-1">
-              <p className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-4">Notes</p>
-              <p className="text-slate-600 text-sm leading-relaxed italic">
-                {invoice.notes || "No additional notes provided for this invoice."}
+              <p className="text-[10px] font-bold text-text-muted uppercase tracking-widest mb-4 opacity-60">Corporate Notes</p>
+              <p className="text-text-muted text-sm leading-relaxed italic border-l-4 border-accent-sage/30 pl-4 py-2 bg-bg-main/30 rounded-r-xl">
+                {invoice.notes || "Standard corporate protocols applied. No specific override notes listed."}
               </p>
             </div>
             <div className="w-full md:w-80 space-y-3">
-              <div className="flex justify-between text-slate-600">
+              <div className="flex justify-between text-text-muted text-xs uppercase font-bold">
                 <span>Subtotal</span>
                 <span>₹{invoice.subtotal.toLocaleString()}</span>
               </div>
-              <div className="flex justify-between text-slate-600">
-                <span>Total Tax</span>
+              <div className="flex justify-between text-text-muted text-xs uppercase font-bold">
+                <span>Tax Archive Total</span>
                 <span>₹{invoice.taxTotal.toLocaleString()}</span>
               </div>
-              <div className="flex justify-between text-xl font-bold text-slate-900 border-t border-slate-100 pt-3">
+              <div className="flex justify-between text-xl font-black text-text-main border-t border-border-base pt-3 tracking-tighter">
                 <span>Grand Total</span>
                 <span>₹{invoice.grandTotal.toLocaleString()}</span>
               </div>
-              <div className="flex justify-between text-green-600 font-medium">
+              <div className="flex justify-between text-emerald-600 text-xs font-bold uppercase">
                 <span>Paid to Date</span>
                 <span>-₹{invoice.paidAmount.toLocaleString()}</span>
               </div>
-              <div className="flex justify-between text-xl font-black text-indigo-600 bg-indigo-50 p-4 rounded-xl mt-4">
-                <span>Balance Due</span>
+              <div className="flex justify-between text-lg font-black text-text-main bg-bg-main p-6 rounded-2xl mt-4 border border-border-base shadow-inner">
+                <span className="uppercase text-[10px] tracking-widest opacity-60">Balance Due</span>
                 <span>₹{(invoice.grandTotal - invoice.paidAmount).toLocaleString()}</span>
               </div>
             </div>

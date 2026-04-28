@@ -1,5 +1,5 @@
 import React from 'react';
-import { LayoutDashboard, Package, Users, FileText, CreditCard, ChevronLeft, ChevronRight, Menu, LogOut, Boxes, ShoppingCart, Truck, Palette, Settings2 } from 'lucide-react';
+import { LayoutDashboard, Package, Users, FileText, CreditCard, ChevronLeft, ChevronRight, Menu, LogOut, Boxes, ShoppingCart, Truck, Palette, Settings2, Plus, Calendar, UserPlus } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { useTheme, palettes } from '../lib/ThemeContext';
 
@@ -10,25 +10,67 @@ interface SidebarProps {
   setIsCollapsed: (collapsed: boolean) => void;
 }
 
-const navItems = [
-  { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard },
-  { id: 'products', label: 'Products', icon: Boxes },
-  { id: 'inventory', label: 'Inventory', icon: Package },
-  { id: 'orders', label: 'Orders', icon: ShoppingCart },
-  { id: 'customers', label: 'Customers', icon: Users },
-  { id: 'suppliers', label: 'Suppliers', icon: Truck },
-  { id: 'invoices', label: 'Invoices', icon: FileText },
-  { id: 'payments', label: 'Payments', icon: CreditCard },
-  { id: 'customize', label: 'Customize', icon: Settings2 },
+const navSections = [
+  {
+    label: 'Overview',
+    items: [{ id: 'dashboard', label: 'Analytics', icon: LayoutDashboard }]
+  },
+  {
+    label: 'Lead Management',
+    items: [
+      { id: 'leads', label: 'Leads CRM', icon: UserPlus },
+      { id: 'appointments', label: 'Appointments', icon: Calendar },
+    ]
+  },
+  {
+    label: 'Order Desk',
+    items: [
+      { id: 'customers', label: 'Customers', icon: Users },
+      { id: 'orders', label: 'Purchase Orders', icon: ShoppingCart },
+      { id: 'invoices', label: 'Invoices', icon: FileText },
+      { id: 'payments', label: 'Payments', icon: CreditCard },
+    ]
+  },
+  {
+    label: 'Enterprise Masters',
+    items: [
+      { id: 'suppliers', label: 'Suppliers', icon: Truck },
+      { id: 'products', label: 'Product Master', icon: Boxes },
+    ]
+  },
+  {
+    label: 'System',
+    items: [
+      { id: 'customize', label: 'Brand & UI', icon: Palette },
+    ]
+  }
 ];
 
 export const Sidebar: React.FC<SidebarProps> = ({ activeTab, setActiveTab, isCollapsed, setIsCollapsed }) => {
   return (
-    <motion.div
-      initial={false}
-      animate={{ width: isCollapsed ? '80px' : '220px' }}
-      className="h-screen bg-sidebar-bg text-[#D6D3CE] flex flex-col sticky top-0"
-    >
+    <>
+      {/* Mobile Overlay */}
+      <AnimatePresence>
+        {!isCollapsed && (
+          <motion.div 
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            onClick={() => setIsCollapsed(true)}
+            className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[45] lg:hidden"
+          />
+        )}
+      </AnimatePresence>
+
+      <motion.aside 
+        initial={false}
+        animate={{ 
+          width: isCollapsed ? (window.innerWidth < 1024 ? '0px' : '80px') : '220px',
+          x: isCollapsed && window.innerWidth < 1024 ? -220 : 0
+        }}
+        transition={{ type: 'spring', damping: 25, stiffness: 200 }}
+        className={`fixed lg:relative inset-y-0 left-0 bg-sidebar-bg text-[#D6D3CE] flex flex-col z-[50] overflow-hidden transition-colors duration-300`}
+      >
       <div className="p-6 flex flex-col mb-4">
         <div className="flex items-center justify-between mb-1">
           <AnimatePresence mode="wait">
@@ -60,32 +102,43 @@ export const Sidebar: React.FC<SidebarProps> = ({ activeTab, setActiveTab, isCol
         </div>
       </div>
 
-      <nav className="flex-1 px-4 space-y-1 mt-4">
-        {navItems.map((item) => (
-          <button
-            key={item.id}
-            onClick={() => setActiveTab(item.id)}
-            className={`w-full flex items-center gap-4 px-4 py-3 rounded-xl transition-all group ${
-              activeTab === item.id
-                ? 'bg-accent-sage text-white shadow-lg'
-                : 'hover:bg-white/5 text-stone-400 hover:text-stone-100'
-            }`}
-            style={{ 
-               backgroundColor: activeTab === item.id ? 'var(--theme-primary)' : 'transparent',
-               boxShadow: activeTab === item.id ? '0 10px 15px -3px rgba(0,0,0,0.1)' : 'none'
-            }}
-          >
-            <item.icon size={18} className={`${activeTab === item.id ? 'text-white' : 'opacity-70 group-hover:opacity-100'}`} />
+      <nav className="flex-1 px-4 space-y-6 mt-4 overflow-y-auto no-scrollbar pb-8">
+        {navSections.map((section) => (
+          <div key={section.label} className="space-y-1.5">
             {!isCollapsed && (
-              <motion.span
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                className="font-bold whitespace-nowrap text-[12px] uppercase tracking-widest"
-              >
-                {item.label}
-              </motion.span>
+              <p className="px-4 text-[9px] font-black text-stone-500 uppercase tracking-[0.3em] mb-2">
+                {section.label}
+              </p>
             )}
-          </button>
+            <div className="space-y-1">
+              {section.items.map((item) => (
+                <button
+                  key={item.id}
+                  onClick={() => setActiveTab(item.id)}
+                  className={`w-full flex items-center gap-4 px-4 py-3 rounded-xl transition-all group ${
+                    activeTab === item.id
+                      ? 'bg-accent-sage text-white shadow-lg'
+                      : 'hover:bg-white/5 text-stone-400 hover:text-stone-100'
+                  }`}
+                  style={{ 
+                    backgroundColor: activeTab === item.id ? 'var(--theme-primary)' : 'transparent',
+                    boxShadow: activeTab === item.id ? '0 10px 15px -3px rgba(0,0,0,0.1)' : 'none'
+                  }}
+                >
+                  <item.icon size={18} className={`${activeTab === item.id ? 'text-white' : 'opacity-70 group-hover:opacity-100'}`} />
+                  {!isCollapsed && (
+                    <motion.span
+                      initial={{ opacity: 0 }}
+                      animate={{ opacity: 1 }}
+                      className="font-bold whitespace-nowrap text-[12px] uppercase tracking-widest text-left"
+                    >
+                      {item.label}
+                    </motion.span>
+                  )}
+                </button>
+              ))}
+            </div>
+          </div>
         ))}
       </nav>
 
@@ -105,19 +158,28 @@ export const Sidebar: React.FC<SidebarProps> = ({ activeTab, setActiveTab, isCol
           )}
         </div>
       </div>
-    </motion.div>
+    </motion.aside>
+    </>
   );
 };
 
-export const TopBar: React.FC<{ title: string }> = ({ title }) => {
+export const TopBar: React.FC<{ title: string; onMenuClick: () => void }> = ({ title, onMenuClick }) => {
   return (
-    <header className="h-20 px-10 flex items-center justify-between bg-[var(--theme-card-bg,white)]/80 backdrop-blur-md border-b border-border-base sticky top-0 z-10 transition-colors">
+    <header className="h-16 md:h-20 px-4 md:px-10 flex items-center justify-between bg-[var(--theme-card-bg,white)]/80 backdrop-blur-md border-b border-border-base sticky top-0 z-40 transition-colors">
       <div className="flex items-center gap-3">
-        <span className="text-[10px] font-black text-text-muted uppercase tracking-[0.2em]">A-Star Portal</span>
-        <span className="text-stone-300 dark:text-stone-700">/</span>
-        <span className="text-sm font-black text-text-main uppercase tracking-widest">{title}</span>
+        <button 
+          onClick={onMenuClick}
+          className="p-2 -ml-2 lg:hidden text-text-muted hover:bg-bg-main rounded-lg transition-colors"
+        >
+          <Menu size={20} />
+        </button>
+        <div className="hidden sm:flex items-center gap-2">
+          <span className="text-[10px] font-black text-text-muted uppercase tracking-[0.2em]">A-Star Portal</span>
+          <span className="text-stone-300 dark:text-stone-700">/</span>
+        </div>
+        <span className="text-sm font-black text-text-main uppercase tracking-widest truncate max-w-[150px] sm:max-w-none">{title}</span>
       </div>
-      <div className="flex items-center gap-8">
+      <div className="flex items-center gap-3 md:gap-8">
         <div className="relative hidden md:block">
           <input 
             type="text" 
@@ -127,10 +189,11 @@ export const TopBar: React.FC<{ title: string }> = ({ title }) => {
           <span className="absolute left-3.5 top-1/2 -translate-y-1/2 text-stone-400 text-xs">🔍</span>
         </div>
         <button 
-          className="bg-text-main text-bg-main px-6 py-2.5 text-[10px] font-black uppercase tracking-[0.2em] rounded-xl hover:opacity-90 transition-all active:scale-[0.98] shadow-lg shadow-black/5"
+          className="bg-text-main text-bg-main px-4 md:px-6 py-2 md:py-2.5 text-[10px] font-black uppercase tracking-[0.2em] rounded-xl hover:opacity-90 transition-all active:scale-[0.98] shadow-lg shadow-black/5 flex items-center gap-2"
           style={{ backgroundColor: 'var(--theme-primary)', color: 'white' }}
         >
-          + Create Invoice
+          <Plus size={14} className="shrink-0" />
+          <span className="hidden sm:inline">Create Invoice</span>
         </button>
       </div>
     </header>

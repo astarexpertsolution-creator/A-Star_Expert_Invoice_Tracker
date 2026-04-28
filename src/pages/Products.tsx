@@ -23,8 +23,12 @@ export const ProductsPage: React.FC<ProductsPageProps> = ({ products, onAdd, onE
     name: '',
     sku: '',
     category: '',
+    supplierId: '',
+    mrp: 0,
+    baseMargin: 10,
     unitPrice: 0,
     taxPercentage: 0,
+    specifications: '',
     status: ProductStatus.ACTIVE
   });
 
@@ -43,9 +47,26 @@ export const ProductsPage: React.FC<ProductsPageProps> = ({ products, onAdd, onE
     activeCount: products.filter(p => p.category === cat && p.status === ProductStatus.ACTIVE).length
   }));
 
+  const sortedCategories = [...categoryStats].sort((a, b) => {
+    if (selectedCategory === a.name) return -1;
+    if (selectedCategory === b.name) return 1;
+    return 0;
+  });
+
   const handleOpenAdd = () => {
     setEditingProduct(null);
-    setFormData({ name: '', sku: '', category: '', unitPrice: 0, taxPercentage: 0, status: ProductStatus.ACTIVE });
+    setFormData({ 
+      name: '', 
+      sku: '', 
+      category: '', 
+      supplierId: '',
+      mrp: 0,
+      baseMargin: 10,
+      unitPrice: 0, 
+      taxPercentage: 0, 
+      specifications: '',
+      status: ProductStatus.ACTIVE 
+    });
     setIsModalOpen(true);
   };
 
@@ -67,18 +88,18 @@ export const ProductsPage: React.FC<ProductsPageProps> = ({ products, onAdd, onE
 
   return (
     <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 bg-[var(--theme-card-bg,white)] p-6 rounded-3xl shadow-sm border border-border-base transition-colors">
-        <div className="flex items-center gap-4 flex-1">
+      <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 md:gap-6 bg-[var(--theme-card-bg,white)] p-4 md:p-6 rounded-3xl shadow-sm border border-border-base transition-colors">
+        <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-4 flex-1">
           {selectedCategory && (
             <Button 
               variant="outline" 
               onClick={() => setSelectedCategory(null)}
-              className="gap-2 h-12 rounded-xl"
+              className="gap-2 h-12 rounded-xl w-full sm:w-auto"
             >
               <X size={16} /> Back
             </Button>
           )}
-          <div className="relative flex-1 max-w-md">
+          <div className="relative flex-1 max-w-none sm:max-w-md">
             <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-stone-300" size={18} />
             <Input 
               placeholder="Search enterprise catalog..." 
@@ -88,13 +109,13 @@ export const ProductsPage: React.FC<ProductsPageProps> = ({ products, onAdd, onE
             />
           </div>
           <div className="flex items-center gap-3">
-             <div className="w-10 h-10 bg-bg-main rounded-xl flex items-center justify-center text-text-muted">
+             <div className="w-10 h-10 bg-bg-main rounded-xl flex items-center justify-center text-text-muted hidden sm:flex">
                 <Filter size={18} />
              </div>
             <Select 
               value={statusFilter} 
               onChange={(e) => setStatusFilter(e.target.value as any)}
-              className="w-44 h-12 py-0 rounded-xl"
+              className="w-full sm:w-44 h-12 py-0 rounded-xl"
             >
               <option value="All">All Status Types</option>
               <option value={ProductStatus.ACTIVE}>Active Units</option>
@@ -102,121 +123,137 @@ export const ProductsPage: React.FC<ProductsPageProps> = ({ products, onAdd, onE
             </Select>
           </div>
         </div>
-        <Button onClick={handleOpenAdd} className="gap-2 h-12 px-8">
+        <Button onClick={handleOpenAdd} className="gap-2 h-12 px-6 sm:px-8 w-full lg:w-auto">
           <Plus size={18} /> New Product
         </Button>
       </div>
 
       <AnimatePresence mode="wait">
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8 items-start">
-          {categoryStats.map((cat) => (
-            <React.Fragment key={cat.name}>
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 md:gap-8 items-start">
+          {sortedCategories.map((cat) => {
+            const isExpanded = selectedCategory === cat.name;
+            return (
               <motion.div
+                key={cat.name}
                 layout
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
-                whileHover={{ y: selectedCategory === cat.name ? 0 : -8 }}
-                onClick={() => setSelectedCategory(selectedCategory === cat.name ? null : cat.name)}
-                className={`group cursor-pointer ${selectedCategory === cat.name ? 'ring-4 ring-accent-sage/10 rounded-[2.5rem]' : ''}`}
+                transition={{ type: 'spring', damping: 30, stiffness: 300, layout: { duration: 0.4 } }}
+                onClick={() => !isExpanded && setSelectedCategory(cat.name)}
+                className={`group cursor-pointer ${isExpanded ? 'col-span-full' : ''}`}
               >
-                <Card className={`transition-all h-full flex flex-col justify-between border-2 rounded-[2.5rem] ${selectedCategory === cat.name ? 'border-accent-sage shadow-xl shadow-accent-sage/10' : 'border-transparent hover:shadow-xl hover:shadow-accent-sage/10'}`}>
+                <Card className={`transition-all border-2 rounded-[2.5rem] overflow-hidden ${isExpanded ? 'border-accent-sage ring-8 ring-accent-sage/5' : 'border-transparent hover:border-accent-sage/20 shadow-sm hover:shadow-xl'}`}>
                   <div className="space-y-6">
                     <div className="flex items-center justify-between">
-                      <div className={`w-16 h-16 rounded-[1.5rem] flex items-center justify-center transition-all ${selectedCategory === cat.name ? 'bg-accent-sage text-white' : 'bg-accent-sage/5 text-accent-sage group-hover:scale-110'}`}>
+                      <div className={`w-16 h-16 rounded-[1.5rem] flex items-center justify-center transition-all ${isExpanded ? 'bg-accent-sage text-white' : 'bg-accent-sage/5 text-accent-sage group-hover:scale-110'}`}>
                          <Boxes size={28} />
                       </div>
-                      <Badge color={selectedCategory === cat.name ? 'green' : 'indigo'} className="px-3 py-1 scale-110">
-                        {selectedCategory === cat.name ? 'Expanded' : `${cat.count} Units`}
-                      </Badge>
+                      <div className="flex items-center gap-3">
+                        {isExpanded && (
+                          <Button 
+                            variant="ghost" 
+                            size="sm" 
+                            onClick={(e) => { e.stopPropagation(); setSelectedCategory(null); }}
+                            className="text-accent-sage hover:bg-accent-sage/10 rounded-xl"
+                          >
+                            Collapse Catalog <X size={14} className="ml-2" />
+                          </Button>
+                        )}
+                        <Badge color={isExpanded ? 'green' : 'indigo'} className="px-3 py-1 scale-110">
+                          {cat.count} Units
+                        </Badge>
+                      </div>
                     </div>
+                    
                     <div>
-                      <h3 className="text-2xl font-black text-text-main tracking-tight group-hover:text-accent-sage transition-colors">{cat.name}</h3>
+                      <h3 className={`font-black tracking-tight transition-all ${isExpanded ? 'text-4xl text-accent-sage' : 'text-2xl text-text-main group-hover:text-accent-sage'}`}>
+                        {cat.name}
+                      </h3>
                       <p className="text-[11px] font-bold text-text-muted uppercase tracking-[0.1em] mt-2 inline-flex items-center gap-2">
-                         <span className={`w-1.5 h-1.5 rounded-full animate-pulse ${selectedCategory === cat.name ? 'bg-accent-sage' : 'bg-emerald-500'}`}></span>
-                         {cat.activeCount} Active Catalog Items
+                         <span className={`w-1.5 h-1.5 rounded-full ${isExpanded ? 'bg-accent-sage animate-pulse' : 'bg-emerald-500'}`}></span>
+                         {cat.activeCount} Active Units Ready for Dispatch
                       </p>
                     </div>
+
+                    <AnimatePresence>
+                      {isExpanded && (
+                        <motion.div
+                          initial={{ opacity: 0, height: 0 }}
+                          animate={{ opacity: 1, height: 'auto' }}
+                          exit={{ opacity: 0, height: 0 }}
+                          className="pt-8 border-t border-border-base mt-8 overflow-hidden"
+                          onClick={(e) => e.stopPropagation()} 
+                        >
+                          <div className="overflow-x-auto -mx-4 md:mx-0 px-4 md:px-0">
+                            <table className="w-full text-left min-w-[700px]">
+                              <thead>
+                                <tr className="border-b border-border-base">
+                                  <th className="pb-4 text-[10px] font-black text-text-muted uppercase tracking-[0.2em]">Product Node</th>
+                                  <th className="pb-4 text-[10px] font-black text-text-muted uppercase tracking-[0.2em]">Identification</th>
+                                  <th className="pb-4 text-[10px] font-black text-text-muted uppercase tracking-[0.2em] text-right">M.R.P</th>
+                                  <th className="pb-4 text-[10px] font-black text-text-muted uppercase tracking-[0.2em] text-right">Margin %</th>
+                                  <th className="pb-4 text-[10px] font-black text-text-muted uppercase tracking-[0.2em] text-right">Price</th>
+                                  <th className="pb-4 text-[10px] font-black text-text-muted uppercase tracking-[0.2em] text-center">Tax %</th>
+                                  <th className="pb-4 text-[10px] font-black text-text-muted uppercase tracking-[0.2em]">Status</th>
+                                  <th className="pb-4 text-[10px] font-black text-text-muted uppercase tracking-[0.2em] text-right">Actions</th>
+                                </tr>
+                              </thead>
+                              <tbody className="divide-y divide-border-base/50">
+                                {filteredProducts.map((p) => (
+                                  <tr key={p.id} className="group/row hover:bg-bg-main transition-colors">
+                                    <td className="py-5">
+                                      <p className="font-bold text-text-main tracking-tight">{p.name}</p>
+                                    </td>
+                                    <td className="py-5 font-mono text-[10px] text-stone-400 font-bold">{p.sku}</td>
+                                    <td className="py-5 text-right font-black text-text-main tracking-tighter opacity-40">₹{p.mrp?.toFixed(2)}</td>
+                                    <td className="py-5 text-right font-black text-accent-sage tracking-tighter">{p.baseMargin}%</td>
+                                    <td className="py-5 text-right font-black text-text-main tracking-tighter">₹{p.unitPrice.toFixed(2)}</td>
+                                    <td className="py-5 text-center text-text-muted font-bold text-xs">{p.taxPercentage}%</td>
+                                    <td className="py-5">
+                                      <Badge color={p.status === ProductStatus.ACTIVE ? 'green' : 'red'}>
+                                        {p.status}
+                                      </Badge>
+                                    </td>
+                                    <td className="py-5 text-right">
+                                      <div className="flex items-center justify-end gap-2">
+                                        <Button 
+                                          variant="outline" 
+                                          size="icon" 
+                                          onClick={(e) => { e.stopPropagation(); handleOpenEdit(p); }} 
+                                          className="h-9 w-9 text-text-main border-border-base hover:bg-white"
+                                        >
+                                          <Edit2 size={14} />
+                                        </Button>
+                                        <Button 
+                                          variant="outline" 
+                                          size="icon" 
+                                          onClick={(e) => { e.stopPropagation(); onDelete(p.id); }} 
+                                          className="h-9 w-9 text-red-500 border-red-100 hover:bg-red-50"
+                                        >
+                                          <Trash2 size={14} />
+                                        </Button>
+                                      </div>
+                                    </td>
+                                  </tr>
+                                ))}
+                              </tbody>
+                            </table>
+                          </div>
+                        </motion.div>
+                      )}
+                    </AnimatePresence>
                   </div>
-                  <div className="mt-12 flex items-center justify-between text-[10px] font-black uppercase tracking-[0.2em] text-accent-sage border-t border-border-base pt-6 pb-2">
-                    <span>{selectedCategory === cat.name ? 'Collapse View' : 'Explore Department'}</span>
-                    {selectedCategory === cat.name ? <X size={16} /> : <ChevronRight size={16} className="group-hover:translate-x-1 transition-transform" />}
-                  </div>
+
+                  {!isExpanded && (
+                    <div className="mt-8 flex items-center justify-between text-[10px] font-black uppercase tracking-[0.2em] text-accent-sage border-t border-border-base pt-6 pb-2">
+                      <span>Explore Department</span>
+                      <ChevronRight size={16} className="group-hover:translate-x-1 transition-transform" />
+                    </div>
+                  )}
                 </Card>
               </motion.div>
-
-              {/* Expanded Product List for this category */}
-              {selectedCategory === cat.name && (
-                <motion.div 
-                  layout
-                  initial={{ opacity: 0, height: 0 }}
-                  animate={{ opacity: 1, height: 'auto' }}
-                  exit={{ opacity: 0, height: 0 }}
-                  className="col-span-full overflow-hidden"
-                >
-                  <Card className="!rounded-[2.5rem] mt-4 border-accent-sage/20 bg-bg-main/50" title={`${cat.name} Product Catalog`} subtitle={`Managing ${cat.count} items in this department`}>
-                    <div className="flex items-center justify-between mb-6">
-                      <div className="flex items-center gap-4">
-                        <Badge color="green">{filteredProducts.length} Results Found</Badge>
-                        <p className="text-xs text-text-muted font-bold uppercase tracking-wider">Filtered by {cat.name}</p>
-                      </div>
-                      <Button variant="ghost" size="sm" onClick={(e) => { e.stopPropagation(); setSelectedCategory(null); }} className="text-accent-sage">
-                        Collapse <X size={14} className="ml-2" />
-                      </Button>
-                    </div>
-                    <div className="overflow-x-auto">
-                      <table className="w-full text-left">
-                        <thead>
-                          <tr className="border-b border-border-base">
-                            <th className="pb-4 text-[10px] font-black text-text-muted uppercase tracking-[0.2em]">Product Details</th>
-                            <th className="pb-4 text-[10px] font-black text-text-muted uppercase tracking-[0.2em]">Sku Identity</th>
-                            <th className="pb-4 text-[10px] font-black text-text-muted uppercase tracking-[0.2em]">Unit Price</th>
-                            <th className="pb-4 text-[10px] font-black text-text-muted uppercase tracking-[0.2em]">Taxation</th>
-                            <th className="pb-4 text-[10px] font-black text-text-muted uppercase tracking-[0.2em]">Status</th>
-                            <th className="pb-4 text-[10px] font-black text-text-muted uppercase tracking-[0.2em] text-right">Actions</th>
-                          </tr>
-                        </thead>
-                        <tbody className="divide-y divide-border-base/50">
-                          {filteredProducts.map((p) => (
-                            <tr key={p.id} className="group hover:bg-white transition-colors">
-                              <td className="py-5">
-                                <p className="font-bold text-text-main tracking-tight">{p.name}</p>
-                                <p className="text-[10px] text-text-muted font-medium mt-0.5">{p.category}</p>
-                              </td>
-                              <td className="py-5 font-mono text-[10px] text-stone-400 font-black">{p.sku}</td>
-                              <td className="py-5 font-black text-text-main tracking-tighter">₹{p.unitPrice.toFixed(2)}</td>
-                              <td className="py-5 text-text-muted font-bold text-xs">{p.taxPercentage}%</td>
-                              <td className="py-5">
-                                <Badge color={p.status === ProductStatus.ACTIVE ? 'green' : 'red'}>
-                                  {p.status}
-                                </Badge>
-                              </td>
-                              <td className="py-5 text-right">
-                                <div className="flex items-center justify-end gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                                  <Button variant="outline" size="icon" onClick={(e) => { e.stopPropagation(); handleOpenEdit(p); }} className="h-9 w-9 text-blue-600 border-blue-100 hover:bg-blue-50">
-                                    <Edit2 size={16} />
-                                  </Button>
-                                  <Button variant="outline" size="icon" onClick={(e) => { e.stopPropagation(); onDelete(p.id); }} className="h-9 w-9 text-rose-600 border-rose-100 hover:bg-rose-50">
-                                    <Trash2 size={16} />
-                                  </Button>
-                                </div>
-                              </td>
-                            </tr>
-                          ))}
-                          {filteredProducts.length === 0 && (
-                            <tr>
-                              <td colSpan={6} className="py-20 text-center">
-                                <p className="text-text-muted font-bold uppercase tracking-widest text-xs italic">No matching enterprise data units found</p>
-                              </td>
-                            </tr>
-                          )}
-                        </tbody>
-                      </table>
-                    </div>
-                  </Card>
-                </motion.div>
-              )}
-            </React.Fragment>
-          ))}
+            );
+          })}
           
           {categories.length === 0 && (
             <div className="col-span-full py-20 text-center">
@@ -286,7 +323,7 @@ export const ProductsPage: React.FC<ProductsPageProps> = ({ products, onAdd, onE
                 <form onSubmit={handleSubmit} className="space-y-4">
                   <div className="grid grid-cols-2 gap-4">
                     <div className="col-span-2">
-                      <Input 
+                       <Input 
                         label="Product Name" 
                         required 
                         value={formData.name} 
@@ -304,21 +341,53 @@ export const ProductsPage: React.FC<ProductsPageProps> = ({ products, onAdd, onE
                       value={formData.category} 
                       onChange={e => setFormData({...formData, category: e.target.value})}
                     />
+                    <Select 
+                      label="Supplier" 
+                      value={formData.supplierId} 
+                      onChange={e => setFormData({...formData, supplierId: e.target.value})}
+                    >
+                      <option value="">Select Supplier</option>
+                      <option value="S1">GCC Biotech</option>
+                      <option value="S2">CoSara Diagnostics</option>
+                      <option value="S3">Tarsons</option>
+                    </Select>
                     <Input 
-                      label="Unit Price" 
+                      label="M.R.P" 
                       type="number" 
-                      step="0.01" 
-                      required 
-                      value={formData.unitPrice} 
-                      onChange={e => setFormData({...formData, unitPrice: parseFloat(e.target.value) || 0})}
+                      value={formData.mrp} 
+                      onChange={e => {
+                        const mrp = parseFloat(e.target.value) || 0;
+                        const unitPrice = mrp - (mrp * (formData.baseMargin || 0) / 100);
+                        setFormData({...formData, mrp, unitPrice});
+                      }}
                     />
                     <Input 
-                      label="Tax Percentage (%)" 
+                      label="Base Margin (%)" 
                       type="number" 
-                      required 
+                      value={formData.baseMargin} 
+                      onChange={e => {
+                        const baseMargin = parseFloat(e.target.value) || 0;
+                        const unitPrice = (formData.mrp || 0) - ((formData.mrp || 0) * baseMargin / 100);
+                        setFormData({...formData, baseMargin, unitPrice});
+                      }}
+                    />
+                    <div className="flex flex-col justify-end pb-2">
+                       <p className="text-[10px] font-black text-text-muted uppercase tracking-widest mb-1">Calculated Price</p>
+                       <p className="text-xl font-black text-accent-sage tracking-tighter">₹{formData.unitPrice.toFixed(2)}</p>
+                    </div>
+                    <Input 
+                      label="Tax (%)" 
+                      type="number" 
                       value={formData.taxPercentage} 
                       onChange={e => setFormData({...formData, taxPercentage: parseFloat(e.target.value) || 0})}
                     />
+                    <div className="col-span-2">
+                       <Input 
+                        label="Specifications" 
+                        value={formData.specifications} 
+                        onChange={e => setFormData({...formData, specifications: e.target.value})}
+                      />
+                    </div>
                     <Select 
                       label="Status" 
                       value={formData.status} 

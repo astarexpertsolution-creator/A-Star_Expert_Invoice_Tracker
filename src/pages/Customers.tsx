@@ -58,17 +58,17 @@ export const CustomersPage: React.FC<CustomersPageProps> = ({ customers, onAdd, 
 
   return (
     <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 bg-[var(--theme-card-bg,white)] p-4 rounded-xl shadow-sm border border-border-base transition-colors">
-        <div className="relative flex-1 max-w-sm">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-[var(--theme-card-bg,white)] p-4 rounded-xl shadow-sm border border-border-base transition-colors">
+        <div className="relative flex-1 max-w-none sm:max-w-sm">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-text-muted transition-colors" size={18} />
           <Input 
             placeholder="Search by name, code or email..." 
-            className="pl-10" 
+            className="pl-10 h-10" 
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
           />
         </div>
-        <Button onClick={handleOpenAdd} className="gap-2">
+        <Button onClick={handleOpenAdd} className="gap-2 h-10 w-full sm:w-auto">
           <Plus size={18} /> Add Customer
         </Button>
       </div>

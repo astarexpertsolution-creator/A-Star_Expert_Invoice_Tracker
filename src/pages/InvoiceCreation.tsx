@@ -23,11 +23,15 @@ export const InvoiceCreation: React.FC<InvoiceCreationProps> = ({ products, cust
   const grandTotal = subtotal + taxTotal;
 
   const addItem = () => {
-    setItems([...items, { productId: '', productName: '', quantity: 1, unitPrice: 0, taxPercentage: 0, lineTotal: 0 }]);
+    setItems([...items, { productId: '', productName: '', sku: '', quantity: 1, mrp: 0, actualMargin: 10, unitPrice: 0, taxPercentage: 0, lineTotal: 0 }]);
   };
 
   const removeItem = (index: number) => {
     setItems(items.filter((_, i) => i !== index));
+  };
+
+  const calculateUnitPrice = (mrp: number, margin: number) => {
+    return mrp - (mrp * margin / 100);
   };
 
   const updateItem = (index: number, field: keyof InvoiceItem, value: any) => {
@@ -38,9 +42,16 @@ export const InvoiceCreation: React.FC<InvoiceCreationProps> = ({ products, cust
       const product = products.find(p => p.id === value);
       if (product) {
         item.productName = product.name;
-        item.unitPrice = product.unitPrice;
+        item.sku = product.sku;
+        item.mrp = product.mrp || 0;
+        item.actualMargin = product.baseMargin || 0;
+        item.unitPrice = calculateUnitPrice(item.mrp, item.actualMargin);
         item.taxPercentage = product.taxPercentage;
       }
+    }
+
+    if (field === 'mrp' || field === 'actualMargin') {
+      item.unitPrice = calculateUnitPrice(item.mrp, item.actualMargin);
     }
     
     item.lineTotal = (item.unitPrice * item.quantity) * (1 + item.taxPercentage / 100);
@@ -73,22 +84,22 @@ export const InvoiceCreation: React.FC<InvoiceCreationProps> = ({ products, cust
 
   return (
     <div className="space-y-8 pb-12 animate-in fade-in slide-in-from-bottom-4 duration-500">
-      <div className="flex items-center justify-between">
-        <button onClick={onCancel} className="flex items-center gap-2 text-slate-500 hover:text-slate-800 transition-colors">
+      <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-4">
+        <button onClick={onCancel} className="flex items-center gap-2 text-text-muted hover:text-text-main transition-colors text-sm font-bold">
           <ArrowLeft size={18} /> Back to Invoices
         </button>
         <div className="flex gap-3">
-          <Button variant="outline" onClick={() => handleSave(true)}>Save Draft</Button>
-          <Button onClick={() => handleSave(false)} className="gap-2">
+          <Button variant="outline" className="flex-1 sm:flex-none" onClick={() => handleSave(true)}>Save Draft</Button>
+          <Button onClick={() => handleSave(false)} className="gap-2 flex-1 sm:flex-none">
             <Save size={18} /> Final Save
           </Button>
         </div>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 md:gap-8">
         <div className="lg:col-span-2 space-y-6">
           <Card title="Invoice Basic Info">
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
               <Input label="Invoice Number" value={invoiceNumber} onChange={(e) => setInvoiceNumber(e.target.value)} />
               <Input label="Invoice Date" type="date" value={invoiceDate} onChange={(e) => setInvoiceDate(e.target.value)} />
               <Input label="Due Date" type="date" value={dueDate} onChange={(e) => setDueDate(e.target.value)} />
@@ -96,72 +107,78 @@ export const InvoiceCreation: React.FC<InvoiceCreationProps> = ({ products, cust
           </Card>
 
           <Card title="Line Items">
-            <div className="space-y-4">
-              <table className="w-full text-left">
-                <thead>
-                  <tr className="border-b border-slate-100">
-                    <th className="pb-3 text-sm font-semibold text-slate-600">Product</th>
-                    <th className="pb-3 text-sm font-semibold text-slate-600 w-24">Qty</th>
-                    <th className="pb-3 text-sm font-semibold text-slate-600 w-32">Unit Price</th>
-                    <th className="pb-3 text-sm font-semibold text-slate-600 w-20">Tax %</th>
-                    <th className="pb-3 text-sm font-semibold text-slate-600 w-32">Total</th>
-                    <th className="pb-3 text-sm font-semibold text-slate-600 w-10"></th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-slate-50">
-                  {items.map((item, idx) => (
-                    <tr key={idx}>
-                      <td className="py-3 pr-4 text-slate-400">
-                        <Select 
-                          value={item.productId} 
-                          onChange={(e) => updateItem(idx, 'productId', e.target.value)}
-                          className="h-10 py-0"
-                        >
-                          <option value="">Select Product</option>
-                          {products.map(p => (
-                            <option key={p.id} value={p.id}>{p.name} ({p.sku})</option>
-                          ))}
-                        </Select>
-                      </td>
-                      <td className="py-3 px-2">
-                        <Input 
-                          type="number" 
-                          min="1"
-                          value={item.quantity} 
-                          onChange={(e) => updateItem(idx, 'quantity', parseFloat(e.target.value) || 0)}
-                          className="h-10 text-center"
-                        />
-                      </td>
-                      <td className="py-3 px-2">
-                        <Input 
-                          type="number" 
-                          value={item.unitPrice} 
-                          onChange={(e) => updateItem(idx, 'unitPrice', parseFloat(e.target.value) || 0)}
-                          className="h-10"
-                        />
-                      </td>
-                      <td className="py-3 px-2">
-                        <Input 
-                          type="number" 
-                          value={item.taxPercentage} 
-                          onChange={(e) => updateItem(idx, 'taxPercentage', parseFloat(e.target.value) || 0)}
-                          className="h-10 text-center"
-                        />
-                      </td>
-                      <td className="py-3 px-2 text-right font-medium text-slate-900">
-                        ₹{item.lineTotal.toFixed(2)}
-                      </td>
-                      <td className="py-3 pl-2">
-                        <button onClick={() => removeItem(idx)} className="text-red-400 hover:text-red-600 transition-colors">
-                          <Trash2 size={18} />
-                        </button>
-                      </td>
+            <div className="space-y-6">
+              <div className="overflow-x-auto -mx-6 px-6">
+                <table className="w-full text-left min-w-[600px]">
+                  <thead>
+                    <tr className="border-b border-border-base text-[10px] uppercase font-black tracking-widest text-text-muted">
+                      <th className="pb-3">Product</th>
+                      <th className="pb-3 text-center">MRP</th>
+                      <th className="pb-3 text-center">Margin %</th>
+                      <th className="pb-3 text-center">Qty</th>
+                      <th className="pb-3 text-right">Unit Price</th>
+                      <th className="pb-3 text-right">Total</th>
+                      <th className="pb-3"></th>
                     </tr>
-                  ))}
-                </tbody>
-              </table>
+                  </thead>
+                  <tbody className="divide-y divide-border-base">
+                    {items.map((item, idx) => (
+                      <tr key={idx} className="group">
+                        <td className="py-4 pr-4">
+                          <Select 
+                            value={item.productId} 
+                            onChange={(e) => updateItem(idx, 'productId', e.target.value)}
+                            className="h-10 py-0 text-xs"
+                          >
+                            <option value="">Select Product Node</option>
+                            {products.map(p => (
+                              <option key={p.id} value={p.id}>{p.name}</option>
+                            ))}
+                          </Select>
+                        </td>
+                        <td className="py-4 px-2">
+                           <Input 
+                            type="number" 
+                            value={item.mrp} 
+                            onChange={(e) => updateItem(idx, 'mrp', parseFloat(e.target.value) || 0)}
+                            className="h-10 text-center text-xs font-bold"
+                          />
+                        </td>
+                        <td className="py-4 px-2">
+                           <Input 
+                            type="number" 
+                            value={item.actualMargin} 
+                            onChange={(e) => updateItem(idx, 'actualMargin', parseFloat(e.target.value) || 0)}
+                            className="h-10 text-center text-xs font-bold text-accent-sage"
+                          />
+                        </td>
+                        <td className="py-4 px-2">
+                          <Input 
+                            type="number" 
+                            min="1"
+                            value={item.quantity} 
+                            onChange={(e) => updateItem(idx, 'quantity', parseFloat(e.target.value) || 0)}
+                            className="h-10 text-center text-xs font-bold"
+                          />
+                        </td>
+                        <td className="py-4 px-2 text-right">
+                          <span className="text-xs font-bold text-text-main opacity-60">₹{item.unitPrice.toFixed(2)}</span>
+                        </td>
+                        <td className="py-4 px-2 text-right font-black text-text-main">
+                          ₹{item.lineTotal.toFixed(2)}
+                        </td>
+                        <td className="py-4 pl-2">
+                          <button onClick={() => removeItem(idx)} className="text-red-400 hover:text-red-700 transition-colors p-1 hover:bg-red-50 rounded-lg">
+                            <Trash2 size={18} />
+                          </button>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
               <Button variant="outline" size="sm" onClick={addItem} className="gap-2">
-                <Plus size={16} /> Add Item
+                <Plus size={16} /> Add Line Item
               </Button>
             </div>
           </Card>
