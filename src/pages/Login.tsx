@@ -16,58 +16,81 @@ export const Login: React.FC<{ onLogin: () => void }> = ({ onLogin }) => {
   };
 
   return (
-    <div className="min-h-screen bg-bg-main flex items-center justify-center p-6">
+    <div className="min-h-screen bg-[#FAFAFA] flex items-center justify-center p-6 relative overflow-hidden">
+      {/* Background Orbs */}
+      <div className="absolute top-0 left-0 w-full h-full overflow-hidden pointer-events-none">
+        <div className="absolute top-[-10%] left-[-10%] w-[40%] h-[40%] bg-accent-sage/5 rounded-full blur-[120px]"></div>
+        <div className="absolute bottom-[-10%] right-[-10%] w-[40%] h-[40%] bg-accent-sage/5 rounded-full blur-[120px]"></div>
+      </div>
+
       <motion.div
-        initial={{ opacity: 0, y: 20 }}
+        initial={{ opacity: 0, y: 30 }}
         animate={{ opacity: 1, y: 0 }}
-        className="w-full max-w-md"
+        transition={{ duration: 0.8, ease: "easeOut" }}
+        className="w-full max-w-lg relative z-10"
       >
-        <div className="text-center mb-10">
-          <div className="w-20 h-20 bg-accent-sage rounded-3xl mx-auto flex items-center justify-center text-white mb-6 shadow-lg relative overflow-hidden">
-            <span className="text-3xl font-black relative z-10">A*</span>
-            <div className="absolute top-0 right-0 w-12 h-12 bg-white/10 rounded-full -mr-6 -mt-6"></div>
+        <div className="text-center mb-12">
+          <div className="w-56 h-auto mx-auto flex items-center justify-center mb-10">
+            <img 
+              src="/logo.png" 
+              alt="A-Star Logo" 
+              className="w-full h-auto object-contain transition-all hover:scale-105 duration-500" 
+              onError={(e) => {
+                e.currentTarget.onerror = null;
+                e.currentTarget.src='https://placehold.co/300x120/0F0F0F/white?text=A-Star+Solutions';
+              }} 
+            />
           </div>
-          <h1 className="text-3xl font-bold text-text-main tracking-tight">A-Star <span className="text-accent-sage">Expert Solutions</span></h1>
-          <p className="text-text-muted mt-3 uppercase tracking-[0.2em] text-[10px] font-bold">Future of Science</p>
+          <p className="text-[10px] font-black uppercase tracking-[0.4em] text-stone-300">Enterprise Scientific Access</p>
         </div>
 
-        <Card>
-          <form onSubmit={handleSubmit} className="space-y-6">
-            <div className="space-y-4">
-              <Input 
-                label="Corporate Email" 
-                type="email" 
-                placeholder="admin@astarsolutions.com" 
-                required 
-                defaultValue="admin@astarsolutions.com"
-              />
-              <Input 
-                label="Secure Password" 
-                type="password" 
-                placeholder="••••••••" 
-                required 
-                defaultValue="password123"
-              />
-            </div>
+        <Card className="!rounded-[2.5rem] p-4">
+          <div className="p-4">
+            <form onSubmit={handleSubmit} className="space-y-8">
+              <div className="space-y-6">
+                <Input 
+                  label="Corporate Identity" 
+                  type="email" 
+                  placeholder="name@astarsolutions.com" 
+                  required 
+                  defaultValue="admin@astarsolutions.com"
+                  className="h-14 !rounded-2xl"
+                />
+                <Input 
+                  label="Security Key" 
+                  type="password" 
+                  placeholder="••••••••" 
+                  required 
+                  defaultValue="password123"
+                  className="h-14 !rounded-2xl"
+                />
+              </div>
 
-            <div className="flex items-center justify-between text-xs">
-              <label className="flex items-center gap-2 cursor-pointer text-text-muted font-medium">
-                <input type="checkbox" className="rounded border-border-base text-accent-sage focus:ring-accent-sage/20" />
-                Keep me logged in
-              </label>
-              <a href="#" className="text-accent-sage font-bold hover:text-accent-sage-hover transition-colors">Recover Access</a>
-            </div>
+              <div className="flex items-center justify-between">
+                <label className="flex items-center gap-3 cursor-pointer text-text-muted">
+                  <input type="checkbox" className="w-5 h-5 rounded-lg border-2 border-border-base text-accent-sage focus:ring-accent-sage/20 transition-all" />
+                  <span className="text-xs font-bold uppercase tracking-wider">Persist Session</span>
+                </label>
+                <a href="#" className="text-[10px] font-black uppercase tracking-widest text-accent-sage hover:text-accent-sage-hover transition-colors">Credential Recovery</a>
+              </div>
 
-            <Button variant="primary" type="submit" className="w-full h-12 text-sm font-bold uppercase tracking-widest" isLoading={loading}>
-              Sign In <ChevronRight size={18} className="ml-2" />
-            </Button>
-          </form>
+              <Button variant="primary" type="submit" className="w-full h-16 text-xs font-black uppercase tracking-[0.3em] !rounded-[1.25rem] shadow-xl" isLoading={loading}>
+                Initialize Access <ChevronRight size={18} className="ml-2" />
+              </Button>
+            </form>
+          </div>
         </Card>
 
-        <p className="text-center text-text-muted text-xs mt-10">
-          Authorized access only. By signing in you agree to our 
-          <br /><a href="#" className="text-text-main font-bold hover:underline">Security Protocols</a>
-        </p>
+        <div className="mt-12 text-center space-y-4">
+          <p className="text-stone-400 text-[10px] font-bold uppercase tracking-[0.2em]">
+            Precision Invoicing Systems v2.4.0
+          </p>
+          <div className="flex items-center justify-center gap-6">
+             <a href="#" className="text-stone-300 hover:text-text-main text-[9px] font-black uppercase tracking-widest transition-colors font-sans">Privacy Protocol</a>
+             <span className="text-stone-200">|</span>
+             <a href="#" className="text-stone-300 hover:text-text-main text-[9px] font-black uppercase tracking-widest transition-colors font-sans">Security Standards</a>
+          </div>
+        </div>
       </motion.div>
     </div>
   );

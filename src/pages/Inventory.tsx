@@ -14,36 +14,36 @@ export const Inventory: React.FC = () => {
 
   return (
     <div className="space-y-6 animate-in fade-in duration-500">
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        <Card className="flex items-center gap-4 p-6">
-          <div className="p-3 bg-accent-sage/10 text-accent-sage rounded-xl">
-            <Package size={24} />
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+        <div className="bg-white border border-border-base rounded-[2rem] p-8 shadow-sm flex items-center gap-6">
+          <div className="w-16 h-16 bg-accent-sage/10 text-accent-sage rounded-2xl flex items-center justify-center">
+            <Package size={28} />
           </div>
           <div>
-            <p className="text-xs font-bold text-text-muted uppercase tracking-wider">Total Items</p>
-            <p className="text-2xl font-bold">{inventoryItems.length}</p>
+            <p className="text-[10px] font-black text-text-muted uppercase tracking-[0.2em] mb-1">Total Items</p>
+            <p className="text-4xl font-black tracking-tighter">{inventoryItems.length}</p>
           </div>
-        </Card>
-        <Card className="flex items-center gap-4 p-6">
-          <div className="p-3 bg-status-overdue-bg text-status-overdue-text rounded-xl">
-            <AlertTriangle size={24} />
-          </div>
-          <div>
-            <p className="text-xs font-bold text-text-muted uppercase tracking-wider">Low Stock</p>
-            <p className="text-2xl font-bold">{inventoryItems.filter(i => i.stockLevel < i.reorderLevel).length}</p>
-          </div>
-        </Card>
-        <Card className="flex items-center gap-4 p-6">
-          <div className="p-3 bg-blue-50 text-blue-600 rounded-xl">
-            <TrendingUp size={24} />
+        </div>
+        <div className="bg-white border border-border-base rounded-[2rem] p-8 shadow-sm flex items-center gap-6">
+          <div className="w-16 h-16 bg-status-overdue-bg text-status-overdue-text rounded-2xl flex items-center justify-center">
+            <AlertTriangle size={28} />
           </div>
           <div>
-            <p className="text-xs font-bold text-text-muted uppercase tracking-wider">Total Valuation</p>
-            <p className="text-2xl font-bold">
+            <p className="text-[10px] font-black text-text-muted uppercase tracking-[0.2em] mb-1">Low Stock</p>
+            <p className="text-4xl font-black tracking-tighter">{inventoryItems.filter(i => i.stockLevel < i.reorderLevel).length}</p>
+          </div>
+        </div>
+        <div className="bg-text-main border border-text-main rounded-[2rem] p-8 shadow-xl shadow-stone-200 flex items-center gap-6 text-white">
+          <div className="w-16 h-16 bg-white/10 text-white rounded-2xl flex items-center justify-center">
+            <TrendingUp size={28} />
+          </div>
+          <div>
+            <p className="text-[10px] font-black text-stone-500 uppercase tracking-[0.2em] mb-1">Total Valuation</p>
+            <p className="text-3xl font-black tracking-tighter">
               ₹{inventoryItems.reduce((acc, current) => acc + (current.stockLevel * current.unitPrice), 0).toLocaleString()}
             </p>
           </div>
-        </Card>
+        </div>
       </div>
 
       <Card title="Stock Inventory" subtitle="Current warehouse levels and reorder status">

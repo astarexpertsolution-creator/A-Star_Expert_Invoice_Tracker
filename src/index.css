@@ -4,28 +4,28 @@
 @theme {
   --font-sans: "Inter", ui-sans-serif, system-ui, sans-serif;
   
-  /* Natural Tones Palette */
-  --color-bg-main: #FDFCFB;
-  --color-sidebar-bg: #3C3B37;
-  --color-accent-sage: #7B8A70;
-  --color-accent-sage-hover: #69785F;
-  --color-accent-terracotta: #C97C5D;
-  --color-text-main: #2D2C29;
-  --color-text-muted: #71706C;
-  --color-border-base: #E8E6E1;
+  /* Enterprise Modern Palette */
+  --color-bg-main: #FFFFFF;
+  --color-sidebar-bg: #0F0F0F;
+  --color-accent-sage: #4E605D;
+  --color-accent-sage-hover: #3E4E4B;
+  --color-accent-terracotta: #D17D5D;
+  --color-text-main: #1A1A1A;
+  --color-text-muted: #666666;
+  --color-border-base: #F0F0F0;
   
-  /* Status Colors */
-  --color-status-paid-bg: #ECF2E9;
-  --color-status-paid-text: #4A5D3F;
-  --color-status-pending-bg: #FFF7ED;
-  --color-status-pending-text: #9A6B2D;
-  --color-status-overdue-bg: #FDF2F2;
-  --color-status-overdue-text: #9B1C1C;
+  /* Status Colors (Modern Muted) */
+  --color-status-paid-bg: #F0FDF4;
+  --color-status-paid-text: #166534;
+  --color-status-pending-bg: #FFFBEB;
+  --color-status-pending-text: #92400E;
+  --color-status-overdue-bg: #FEF2F2;
+  --color-status-overdue-text: #991B1B;
 }
 
 @layer base {
   body {
-    @apply font-sans antialiased text-text-main bg-bg-main;
+    @apply font-sans antialiased text-text-main bg-bg-main selection:bg-accent-sage/20;
   }
 }
 

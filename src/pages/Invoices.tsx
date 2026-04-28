@@ -36,32 +36,34 @@ export const InvoicesPage: React.FC<InvoicesPageProps> = ({ invoices, onCreate, 
 
   return (
     <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 bg-white p-4 rounded-xl shadow-sm border border-slate-200">
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 bg-white p-6 rounded-3xl shadow-sm border border-border-base">
         <div className="flex items-center gap-4 flex-1">
-          <div className="relative flex-1 max-w-sm">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
+          <div className="relative flex-1 max-w-md">
+            <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-stone-300" size={18} />
             <Input 
-              placeholder="Search invoice # or customer..." 
-              className="pl-10" 
+              placeholder="Search enterprise billing..." 
+              className="pl-12 h-12" 
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
             />
           </div>
-          <div className="flex items-center gap-2">
-            <Filter className="text-slate-400" size={18} />
+          <div className="flex items-center gap-3">
+             <div className="w-10 h-10 bg-bg-main rounded-xl flex items-center justify-center text-text-muted">
+                <Filter size={18} />
+             </div>
             <Select 
               value={statusFilter} 
               onChange={(e) => setStatusFilter(e.target.value as any)}
-              className="w-44 h-10 py-0"
+              className="w-48 h-12 py-0 rounded-xl"
             >
-              <option value="All">All Payments</option>
+              <option value="All">All Payment Cycles</option>
               {Object.values(PaymentStatus).map(s => (
                 <option key={s} value={s}>{s}</option>
               ))}
             </Select>
           </div>
         </div>
-        <Button onClick={onCreate} className="gap-2">
+        <Button onClick={onCreate} className="gap-2 h-12 px-8">
           <Plus size={18} /> Create Invoice
         </Button>
       </div>

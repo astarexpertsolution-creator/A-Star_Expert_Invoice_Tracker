@@ -8,14 +8,14 @@ interface CardProps {
 }
 
 export const Card: React.FC<CardProps> = ({ children, className = '', title, subtitle }) => (
-  <div className={`bg-white rounded-xl shadow-sm border border-border-base overflow-hidden ${className}`}>
+  <div className={`bg-white rounded-2xl shadow-[0_1px_3px_0_rgba(0,0,0,0.02),0_1px_2px_0_rgba(0,0,0,0.06)] border border-border-base overflow-hidden ${className}`}>
     {(title || subtitle) && (
-      <div className="px-6 py-4 border-b border-border-base bg-[#F8F7F5]">
-        {title && <h3 className="font-semibold text-text-main">{title}</h3>}
-        {subtitle && <p className="text-xs text-text-muted mt-0.5 uppercase tracking-wider font-medium">{subtitle}</p>}
+      <div className="px-8 py-6 border-b border-border-base bg-[#FAFAFA]">
+        {title && <h3 className="text-lg font-bold text-text-main tracking-tight">{title}</h3>}
+        {subtitle && <p className="text-[11px] text-text-muted mt-1 uppercase tracking-[0.15em] font-bold">{subtitle}</p>}
       </div>
     )}
-    <div className="p-6">{children}</div>
+    <div className="p-8">{children}</div>
   </div>
 );
 
@@ -33,21 +33,21 @@ export const Button: React.FC<ButtonProps> = ({
   isLoading,
   ...props
 }) => {
-  const baseStyles = 'inline-flex items-center justify-center font-medium rounded-lg transition-all focus:outline-none focus:ring-2 focus:ring-accent-sage/20 disabled:opacity-50 disabled:cursor-not-allowed';
+  const baseStyles = 'inline-flex items-center justify-center font-bold rounded-xl transition-all active:scale-[0.98] focus:outline-none focus:ring-2 focus:ring-accent-sage/20 disabled:opacity-50 disabled:cursor-not-allowed';
   
   const variants = {
-    primary: 'bg-accent-sage text-white hover:bg-accent-sage-hover shadow-sm',
-    secondary: 'bg-sidebar-bg text-white hover:opacity-90',
-    outline: 'border border-border-base bg-white text-text-muted hover:bg-bg-main hover:text-text-main',
-    danger: 'bg-red-600 text-white hover:bg-red-700',
+    primary: 'bg-accent-sage text-white hover:bg-accent-sage-hover shadow-[0_4px_12px_rgba(78,96,93,0.2)]',
+    secondary: 'bg-sidebar-bg text-white hover:bg-stone-800',
+    outline: 'border border-border-base bg-white text-text-muted hover:border-text-muted hover:text-text-main',
+    danger: 'bg-rose-600 text-white hover:bg-rose-700',
     ghost: 'text-text-muted hover:bg-bg-main hover:text-text-main',
   };
 
   const sizes = {
-    sm: 'px-3 py-1.5 text-sm',
-    md: 'px-4 py-2',
-    lg: 'px-6 py-3 text-lg',
-    icon: 'p-2',
+    sm: 'px-4 py-2 text-xs uppercase tracking-wider',
+    md: 'px-5 py-2.5 text-sm',
+    lg: 'px-8 py-4 text-base',
+    icon: 'p-2.5',
   };
 
   return (
@@ -70,20 +70,20 @@ export const Input: React.FC<React.InputHTMLAttributes<HTMLInputElement> & { lab
   id,
   ...props
 }) => (
-  <div className="space-y-1.5 w-full">
+  <div className="space-y-2 w-full">
     {label && (
-      <label htmlFor={id} className="block text-xs font-bold text-text-muted uppercase tracking-wider">
+      <label htmlFor={id} className="block text-[10px] font-black text-text-muted uppercase tracking-[0.2em]">
         {label}
       </label>
     )}
     <input
       id={id}
-      className={`w-full px-4 py-2 rounded-lg border border-border-base bg-white focus:ring-1 focus:ring-accent-sage focus:border-accent-sage transition-all outline-none text-sm ${
+      className={`w-full px-5 py-3 rounded-xl border border-border-base bg-[#FAFAFA] focus:bg-white focus:ring-2 focus:ring-accent-sage/10 focus:border-accent-sage transition-all outline-none text-sm placeholder:text-stone-300 ${
         error ? 'border-red-500' : ''
       } ${className}`}
       {...props}
     />
-    {error && <p className="text-xs text-red-500 mt-1">{error}</p>}
+    {error && <p className="text-[10px] font-bold text-red-500 mt-1 uppercase tracking-wider">{error}</p>}
   </div>
 );
 
@@ -114,7 +114,7 @@ export const Select: React.FC<React.SelectHTMLAttributes<HTMLSelectElement> & { 
   </div>
 );
 
-export const Badge: React.FC<{ children: React.ReactNode; color?: string }> = ({ children, color = 'slate' }) => {
+export const Badge: React.FC<{ children: React.ReactNode; color?: string; className?: string }> = ({ children, color = 'slate', className = '' }) => {
   const colors: Record<string, string> = {
     slate: 'bg-stone-100 text-stone-600',
     green: 'bg-status-paid-bg text-status-paid-text',
@@ -125,7 +125,7 @@ export const Badge: React.FC<{ children: React.ReactNode; color?: string }> = ({
   };
 
   return (
-    <span className={`px-2 py-0.5 text-[11px] font-bold uppercase tracking-wide rounded ${colors[color] || colors.slate}`}>
+    <span className={`px-2.5 py-1 text-[10px] font-black uppercase tracking-[0.1em] rounded-full inline-flex items-center justify-center ${colors[color] || colors.slate} ${className}`}>
       {children}
     </span>
   );

@@ -31,13 +31,36 @@ export const Dashboard: React.FC<{ invoices: Invoice[] }> = ({ invoices }) => {
 
   return (
     <div className="space-y-8 animate-in fade-in duration-500">
-      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
-        {stats.map((stat, idx) => (
-          <div key={idx} className={`bg-white border rounded-xl p-5 ${stat.border}`}>
-            <p className="text-[11px] font-bold text-stone-400 uppercase tracking-wider mb-1">{stat.label}</p>
-            <p className={`text-2xl font-semibold ${stat.color}`}>{stat.value}</p>
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-6">
+        {stats.slice(0, 4).map((stat, idx) => (
+          <div key={idx} className="bg-white border border-border-base rounded-3xl p-8 shadow-sm hover:shadow-md transition-all">
+            <p className="text-[10px] font-black text-text-muted uppercase tracking-[0.2em] mb-2">{stat.label}</p>
+            <div className="flex items-center justify-between">
+              <p className={`text-4xl font-black ${stat.color} tracking-tighter`}>{stat.value}</p>
+              <div className="w-10 h-10 bg-bg-main rounded-xl flex items-center justify-center text-stone-300">
+                <FileText size={20} />
+              </div>
+            </div>
           </div>
         ))}
+        <div className="col-span-full lg:col-span-2 grid grid-cols-2 gap-6">
+           <div className="bg-text-main border border-text-main rounded-3xl p-8 text-white shadow-xl shadow-stone-200">
+            <p className="text-[10px] font-black text-stone-400 uppercase tracking-[0.2em] mb-2">Total Value</p>
+            <p className="text-3xl font-black tracking-tighter">₹{(totalAmount / 1000).toFixed(1)}k</p>
+            <div className="mt-4 flex items-center gap-2">
+              <div className="w-6 h-1 bg-emerald-500 rounded-full"></div>
+              <p className="text-[10px] uppercase font-bold text-stone-500">Collected: ₹{(totalPaid / 1000).toFixed(1)}k</p>
+            </div>
+          </div>
+          <div className="bg-accent-sage border border-accent-sage rounded-3xl p-8 text-white shadow-xl shadow-accent-sage/20">
+            <p className="text-[10px] font-black text-white/60 uppercase tracking-[0.2em] mb-2">Inventory Value</p>
+            <p className="text-3xl font-black tracking-tighter">₹{(pendingAmount / 1000).toFixed(1)}k</p>
+             <div className="mt-4 flex items-center gap-2">
+              <div className="w-6 h-1 bg-white/30 rounded-full"></div>
+              <p className="text-[10px] uppercase font-bold text-white/60">Pending Audit</p>
+            </div>
+          </div>
+        </div>
       </div>
 
       <div className="grid grid-cols-1 xl:grid-cols-3 gap-8">
@@ -80,31 +103,40 @@ export const Dashboard: React.FC<{ invoices: Invoice[] }> = ({ invoices }) => {
         </div>
 
         <div className="space-y-6">
-          <div className="space-y-4">
-              <button className="w-full bg-stone-100 hover:bg-stone-200 border border-stone-200 rounded-xl p-6 flex flex-col justify-center items-center group transition-all">
-                <span className="text-2xl mb-1">📦</span>
-                <span className="text-xs font-bold text-stone-600 group-hover:text-stone-900 uppercase tracking-wide">Add Product</span>
+          <div className="grid grid-cols-1 gap-4">
+              <button className="w-full bg-white hover:bg-bg-main border border-border-base rounded-2xl p-6 flex items-center gap-4 transition-all group shadow-sm active:scale-[0.98]">
+                <div className="w-12 h-12 bg-indigo-50 rounded-xl flex items-center justify-center text-xl group-hover:scale-110 transition-transform">📦</div>
+                <div className="text-left">
+                  <span className="block text-xs font-black text-text-main uppercase tracking-widest">Add Product</span>
+                  <span className="text-[10px] text-text-muted font-bold uppercase mt-0.5">Catalog Entry</span>
+                </div>
               </button>
-              <button className="w-full bg-stone-100 hover:bg-stone-200 border border-stone-200 rounded-xl p-6 flex flex-col justify-center items-center group transition-all">
-                <span className="text-2xl mb-1">👥</span>
-                <span className="text-xs font-bold text-stone-600 group-hover:text-stone-900 uppercase tracking-wide">Add Customer</span>
+              <button className="w-full bg-white hover:bg-bg-main border border-border-base rounded-2xl p-6 flex items-center gap-4 transition-all group shadow-sm active:scale-[0.98]">
+                <div className="w-12 h-12 bg-emerald-50 rounded-xl flex items-center justify-center text-xl group-hover:scale-110 transition-transform">👥</div>
+                <div className="text-left">
+                  <span className="block text-xs font-black text-text-main uppercase tracking-widest">Add Customer</span>
+                  <span className="text-[10px] text-text-muted font-bold uppercase mt-0.5">Contact Sync</span>
+                </div>
               </button>
-              <button className="w-full bg-stone-100 hover:bg-stone-200 border border-stone-200 rounded-xl p-6 flex flex-col justify-center items-center group transition-all">
-                <span className="text-2xl mb-1">💰</span>
-                <span className="text-xs font-bold text-stone-600 group-hover:text-stone-900 uppercase tracking-wide">Record Payment</span>
+              <button className="w-full bg-white hover:bg-bg-main border border-border-base rounded-2xl p-6 flex items-center gap-4 transition-all group shadow-sm active:scale-[0.98]">
+                <div className="w-12 h-12 bg-amber-50 rounded-xl flex items-center justify-center text-xl group-hover:scale-110 transition-transform">💰</div>
+                <div className="text-left">
+                  <span className="block text-xs font-black text-text-main uppercase tracking-widest">Record Payment</span>
+                  <span className="text-[10px] text-text-muted font-bold uppercase mt-0.5">Direct Entry</span>
+                </div>
               </button>
           </div>
 
-          <div className="bg-sidebar-bg rounded-xl p-6 flex items-center justify-between text-white shadow-lg overflow-hidden relative">
-            <div className="space-y-1 relative z-10">
-              <p className="text-[10px] text-stone-400 uppercase tracking-widest font-bold">Recent Payment</p>
-              <p className="text-2xl font-bold">₹{invoices[0]?.paidAmount.toLocaleString() || "0.00"}</p>
-              <p className="text-[11px] text-stone-400 italic">from {invoices[0]?.customerName || "N/A"}</p>
+          <div className="bg-sidebar-bg rounded-3xl p-10 flex flex-col justify-between text-white shadow-xl overflow-hidden relative min-h-[240px]">
+            <div className="relative z-10">
+              <p className="text-[10px] text-stone-500 uppercase tracking-[0.3em] font-black mb-6">Recent Scientific Revenue</p>
+              <p className="text-5xl font-black tracking-tighter mb-2">₹{invoices[0]?.paidAmount.toLocaleString() || "0.00"}</p>
+              <p className="text-[11px] text-stone-400 font-bold uppercase tracking-wider">Source: {invoices[0]?.customerName || "N/A"}</p>
             </div>
-            <div className="w-12 h-12 bg-emerald-500 rounded-full flex items-center justify-center text-xl relative z-10 shadow-lg shadow-emerald-500/20">
-              ✓
+            <div className="relative z-10 mt-10">
+               <Badge className="bg-white/10 text-white border-none py-2 px-4">Transaction Verified ✓</Badge>
             </div>
-            <div className="absolute top-0 right-0 w-32 h-32 bg-white/5 rounded-full -mr-16 -mt-16 blur-2xl"></div>
+            <div className="absolute top-0 right-0 w-64 h-64 bg-accent-sage rounded-full -mr-32 -mt-32 opacity-20 blur-3xl"></div>
           </div>
         </div>
       </div>

@@ -30,20 +30,24 @@ export const Sidebar: React.FC<SidebarProps> = ({ activeTab, setActiveTab, isCol
       <div className="p-6 flex flex-col mb-4">
         <div className="flex items-center justify-between mb-1">
           <AnimatePresence mode="wait">
-            {!isCollapsed && (
-              <motion.div
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                exit={{ opacity: 0 }}
-                className="overflow-hidden whitespace-nowrap"
-              >
-                <h1 className="text-white font-bold text-xl tracking-tight flex items-center gap-2">
-                  <div className="w-8 h-8 bg-accent-sage rounded flex items-center justify-center text-white text-xs">A*</div>
-                  <span>A-Star<span className="text-stone-400">Solutions</span></span>
-                </h1>
-                <p className="text-stone-500 text-[10px] uppercase tracking-widest mt-1">Expert Scientific Portal</p>
-              </motion.div>
-            )}
+            <motion.div
+              initial={false}
+              animate={{ 
+                width: isCollapsed ? '32px' : 'auto',
+                height: isCollapsed ? '32px' : 'auto'
+              }}
+              className="flex items-center justify-center overflow-hidden"
+            >
+              <img 
+                src="/logo.png" 
+                alt="A-Star Logo" 
+                className={`${isCollapsed ? 'w-8 h-8' : 'w-32'} h-auto object-contain`} 
+                onError={(e) => {
+                  e.currentTarget.onerror = null;
+                  e.currentTarget.src='https://placehold.co/128x128/1A1A1A/white?text=A*';
+                }} 
+              />
+            </motion.div>
           </AnimatePresence>
           <button
             onClick={() => setIsCollapsed(!isCollapsed)}
@@ -54,23 +58,23 @@ export const Sidebar: React.FC<SidebarProps> = ({ activeTab, setActiveTab, isCol
         </div>
       </div>
 
-      <nav className="flex-1 px-3 space-y-1">
+      <nav className="flex-1 px-4 space-y-1 mt-4">
         {navItems.map((item) => (
           <button
             key={item.id}
             onClick={() => setActiveTab(item.id)}
-            className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all group ${
+            className={`w-full flex items-center gap-4 px-4 py-3 rounded-xl transition-all group ${
               activeTab === item.id
-                ? 'bg-white/10 text-white'
-                : 'hover:bg-white/5 text-[#D6D3CE] hover:text-white'
+                ? 'bg-accent-sage text-white shadow-lg shadow-accent-sage/20'
+                : 'hover:bg-white/5 text-stone-400 hover:text-white'
             }`}
           >
-            <item.icon size={20} className={`${activeTab === item.id ? 'text-white' : 'opacity-70 group-hover:opacity-100'}`} />
+            <item.icon size={18} className={`${activeTab === item.id ? 'text-white' : 'opacity-70 group-hover:opacity-100'}`} />
             {!isCollapsed && (
               <motion.span
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
-                className="font-medium whitespace-nowrap text-[13px]"
+                className="font-bold whitespace-nowrap text-[12px] uppercase tracking-widest"
               >
                 {item.label}
               </motion.span>
@@ -79,15 +83,15 @@ export const Sidebar: React.FC<SidebarProps> = ({ activeTab, setActiveTab, isCol
         ))}
       </nav>
 
-      <div className="p-6 border-t border-stone-700/50">
-        <div className="flex items-center gap-3">
-          <div className="w-8 h-8 rounded-full bg-stone-500 flex items-center justify-center text-[10px] text-white shrink-0">
+      <div className="p-8 border-t border-white/5">
+        <div className="flex items-center gap-4">
+          <div className="w-10 h-10 rounded-2xl bg-gradient-to-br from-accent-sage to-accent-sage-hover flex items-center justify-center text-xs font-black text-white shrink-0 shadow-lg">
             AU
           </div>
           {!isCollapsed && (
             <div className="text-[12px] overflow-hidden">
-              <p className="text-white font-medium truncate">Admin User</p>
-              <p className="text-stone-500 truncate">Admin</p>
+              <p className="text-white font-black truncate tracking-tight uppercase">Admin User</p>
+              <p className="text-stone-500 truncate font-bold text-[10px] uppercase">Corporate Admin</p>
             </div>
           )}
         </div>
@@ -98,20 +102,22 @@ export const Sidebar: React.FC<SidebarProps> = ({ activeTab, setActiveTab, isCol
 
 export const TopBar: React.FC<{ title: string }> = ({ title }) => {
   return (
-    <header className="h-16 px-8 flex items-center justify-between bg-white border-b border-border-base sticky top-0 z-10">
-      <div className="flex items-center gap-2">
-        <span className="text-text-muted text-sm italic capitalize">A-Star / {title} Overview</span>
+    <header className="h-20 px-10 flex items-center justify-between bg-white/80 backdrop-blur-md border-b border-border-base sticky top-0 z-10">
+      <div className="flex items-center gap-3">
+        <span className="text-[10px] font-black text-text-muted uppercase tracking-[0.2em]">A-Star Portal</span>
+        <span className="text-stone-300">/</span>
+        <span className="text-sm font-black text-text-main uppercase tracking-widest">{title}</span>
       </div>
-      <div className="flex items-center gap-6">
+      <div className="flex items-center gap-8">
         <div className="relative hidden md:block">
           <input 
             type="text" 
-            placeholder="Search records..." 
-            className="pl-8 pr-4 py-1.5 bg-stone-100 border-none rounded-md text-sm focus:ring-1 focus:ring-stone-300 w-64 outline-none text-text-main"
+            placeholder="Search enterprise records..." 
+            className="pl-10 pr-6 py-2.5 bg-bg-main border border-border-base rounded-xl text-xs focus:ring-2 focus:ring-accent-sage/10 focus:border-accent-sage w-80 outline-none text-text-main transition-all"
           />
-          <span className="absolute left-2.5 top-1/2 -translate-y-1/2 text-stone-400 text-xs">🔍</span>
+          <span className="absolute left-3.5 top-1/2 -translate-y-1/2 text-stone-400 text-xs">🔍</span>
         </div>
-        <button className="bg-accent-sage text-white px-4 py-1.5 text-sm font-medium rounded-md hover:bg-accent-sage-hover transition-colors">
+        <button className="bg-text-main text-white px-6 py-2.5 text-[10px] font-black uppercase tracking-[0.2em] rounded-xl hover:bg-stone-800 transition-all active:scale-[0.98] shadow-lg shadow-stone-200">
           + Create Invoice
         </button>
       </div>
