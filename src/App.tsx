@@ -21,17 +21,11 @@ import { onAuthStateChanged, User } from 'firebase/auth';
 import { auth } from './lib/firebase';
 
 export default function App() {
-  const [user, setUser] = useState<User | null>(null);
-  const [authLoading, setAuthLoading] = useState(true);
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [activeTab, setActiveTab] = useState('dashboard');
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(window.innerWidth < 1024);
 
   useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
-      setUser(currentUser);
-      setAuthLoading(false);
-    });
-
     const handleResize = () => {
       if (window.innerWidth < 1024) {
         setIsSidebarCollapsed(true);
@@ -41,7 +35,6 @@ export default function App() {
     };
     window.addEventListener('resize', handleResize);
     return () => {
-      unsubscribe();
       window.removeEventListener('resize', handleResize);
     };
   }, []);
@@ -61,17 +54,8 @@ export default function App() {
   const [paymentDate, setPaymentDate] = useState(new Date().toISOString().split('T')[0]);
   const [paymentMode, setPaymentMode] = useState('Bank Transfer');
 
-  if (authLoading) {
-    return (
-      <div className="min-h-screen bg-bg-main flex flex-col items-center justify-center gap-4">
-        <Loader2 className="w-10 h-10 text-accent-sage animate-spin" />
-        <p className="text-[10px] font-black uppercase tracking-[0.4em] text-stone-300">Initializing Enterprise Portal</p>
-      </div>
-    );
-  }
-
-  if (!user) {
-    return <Login onLogin={() => {}} />;
+  if (!isAuthenticated) {
+    return <Login onLogin={() => setIsAuthenticated(true)} />;
   }
 
   const handleCreateInvoice = (newInvoiceData: Omit<Invoice, 'id' | 'createdAt'>) => {

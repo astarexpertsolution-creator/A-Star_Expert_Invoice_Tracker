@@ -7,21 +7,13 @@ import { auth } from '../lib/firebase';
 
 export const Login: React.FC<{ onLogin: () => void }> = ({ onLogin }) => {
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
 
-  const handleGoogleLogin = async () => {
+  const handleBypassLogin = () => {
     setLoading(true);
-    setError(null);
-    try {
-      const provider = new GoogleAuthProvider();
-      await signInWithPopup(auth, provider);
+    setTimeout(() => {
       onLogin();
-    } catch (err) {
-      console.error('Login error:', err);
-      setError('A-Star authentication failed. Please check your credentials.');
-    } finally {
       setLoading(false);
-    }
+    }, 800);
   };
 
   return (
@@ -57,27 +49,20 @@ export const Login: React.FC<{ onLogin: () => void }> = ({ onLogin }) => {
           <div className="space-y-8 text-center">
             <div className="space-y-4">
               <h1 className="text-2xl font-black text-text-main uppercase tracking-tighter">System Access</h1>
-              <p className="text-sm text-text-muted">Initialize enterprise authentication protocol to access the Distributor Portal.</p>
+              <p className="text-sm text-text-muted">Initialize enterprise protocol to access the Distributor Portal. SSO is currently disabled.</p>
             </div>
-
-            {error && (
-              <div className="p-4 bg-red-50 text-red-600 rounded-2xl text-[10px] font-black uppercase tracking-widest border border-red-100">
-                {error}
-              </div>
-            )}
 
             <Button 
               variant="primary" 
-              onClick={handleGoogleLogin} 
+              onClick={handleBypassLogin} 
               className="w-full h-16 text-xs font-black uppercase tracking-[0.3em] !rounded-[1.25rem] shadow-xl gap-3" 
               isLoading={loading}
             >
-              <img src="https://www.google.com/favicon.ico" className="w-5 h-5 invert" alt="Google" />
-              Sign in with Corporate Account <ChevronRight size={18} className="ml-2" />
+              Initialize System Session <ChevronRight size={18} className="ml-2" />
             </Button>
 
             <p className="text-[10px] font-bold text-stone-400 uppercase tracking-widest">
-              Authorized Personnel Only
+              Authorized Personnel Access Only
             </p>
           </div>
         </Card>
