@@ -1,6 +1,7 @@
 import React from 'react';
-import { LayoutDashboard, Package, Users, FileText, CreditCard, ChevronLeft, ChevronRight, Menu, LogOut, Boxes, ShoppingCart, Truck } from 'lucide-react';
+import { LayoutDashboard, Package, Users, FileText, CreditCard, ChevronLeft, ChevronRight, Menu, LogOut, Boxes, ShoppingCart, Truck, Palette, Settings2 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
+import { useTheme, palettes } from '../lib/ThemeContext';
 
 interface SidebarProps {
   activeTab: string;
@@ -11,13 +12,14 @@ interface SidebarProps {
 
 const navItems = [
   { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard },
-  { id: 'products', label: 'Products', icon: Package },
-  { id: 'inventory', label: 'Inventory', icon: Boxes },
+  { id: 'products', label: 'Products', icon: Boxes },
+  { id: 'inventory', label: 'Inventory', icon: Package },
   { id: 'orders', label: 'Orders', icon: ShoppingCart },
   { id: 'customers', label: 'Customers', icon: Users },
   { id: 'suppliers', label: 'Suppliers', icon: Truck },
   { id: 'invoices', label: 'Invoices', icon: FileText },
   { id: 'payments', label: 'Payments', icon: CreditCard },
+  { id: 'customize', label: 'Customize', icon: Settings2 },
 ];
 
 export const Sidebar: React.FC<SidebarProps> = ({ activeTab, setActiveTab, isCollapsed, setIsCollapsed }) => {
@@ -101,14 +103,32 @@ export const Sidebar: React.FC<SidebarProps> = ({ activeTab, setActiveTab, isCol
 };
 
 export const TopBar: React.FC<{ title: string }> = ({ title }) => {
+  const { settings, updateSettings } = useTheme();
+
   return (
-    <header className="h-20 px-10 flex items-center justify-between bg-white/80 backdrop-blur-md border-b border-border-base sticky top-0 z-10">
+    <header className="h-20 px-10 flex items-center justify-between bg-[var(--theme-card-bg,white)]/80 backdrop-blur-md border-b border-border-base sticky top-0 z-10 transition-colors">
       <div className="flex items-center gap-3">
         <span className="text-[10px] font-black text-text-muted uppercase tracking-[0.2em]">A-Star Portal</span>
         <span className="text-stone-300">/</span>
         <span className="text-sm font-black text-text-main uppercase tracking-widest">{title}</span>
       </div>
       <div className="flex items-center gap-8">
+        <div className="flex items-center gap-2 px-4 py-2 bg-bg-main rounded-xl border border-border-base">
+          <Palette size={14} className="text-text-muted mr-1" />
+          <div className="flex gap-1.5">
+            {Object.entries(palettes).map(([name, colors]) => (
+              <button
+                key={name}
+                onClick={() => updateSettings({ palette: name })}
+                className={`w-4 h-4 rounded-full transition-all ring-offset-2 ${
+                  settings.palette === name ? 'ring-2 ring-accent-sage scale-110' : 'hover:scale-110'
+                }`}
+                style={{ backgroundColor: colors.primary }}
+                title={name}
+              />
+            ))}
+          </div>
+        </div>
         <div className="relative hidden md:block">
           <input 
             type="text" 

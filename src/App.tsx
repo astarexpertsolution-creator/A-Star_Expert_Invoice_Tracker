@@ -7,6 +7,7 @@ import { InvoicesPage } from './pages/Invoices';
 import { Inventory } from './pages/Inventory';
 import { Orders } from './pages/Orders';
 import { Suppliers } from './pages/Suppliers';
+import { CustomizePage } from './pages/Customize';
 import { InvoiceCreation } from './pages/InvoiceCreation';
 import { InvoiceDetails } from './pages/InvoiceDetails';
 import { Login } from './pages/Login';
@@ -142,6 +143,8 @@ export default function App() {
             Payments Module - This page will list all payment transactions in the next version.
           </div>
         );
+      case 'customize':
+        return <CustomizePage />;
       default:
         return <Dashboard invoices={invoices} />;
     }

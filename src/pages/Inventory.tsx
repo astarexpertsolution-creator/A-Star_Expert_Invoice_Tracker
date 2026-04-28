@@ -15,16 +15,16 @@ export const Inventory: React.FC = () => {
   return (
     <div className="space-y-6 animate-in fade-in duration-500">
       <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-        <div className="bg-white border border-border-base rounded-[2rem] p-8 shadow-sm flex items-center gap-6">
+        <div className="bg-[var(--theme-card-bg,white)] border border-border-base rounded-[2rem] p-8 shadow-sm flex items-center gap-6 transition-colors">
           <div className="w-16 h-16 bg-accent-sage/10 text-accent-sage rounded-2xl flex items-center justify-center">
             <Package size={28} />
           </div>
           <div>
             <p className="text-[10px] font-black text-text-muted uppercase tracking-[0.2em] mb-1">Total Items</p>
-            <p className="text-4xl font-black tracking-tighter">{inventoryItems.length}</p>
+            <p className="text-4xl font-black tracking-tighter text-text-main">{inventoryItems.length}</p>
           </div>
         </div>
-        <div className="bg-white border border-border-base rounded-[2rem] p-8 shadow-sm flex items-center gap-6">
+        <div className="bg-[var(--theme-card-bg,white)] border border-border-base rounded-[2rem] p-8 shadow-sm flex items-center gap-6 transition-colors">
           <div className="w-16 h-16 bg-status-overdue-bg text-status-overdue-text rounded-2xl flex items-center justify-center">
             <AlertTriangle size={28} />
           </div>

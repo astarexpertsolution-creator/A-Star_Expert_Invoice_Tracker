@@ -67,7 +67,7 @@ export const ProductsPage: React.FC<ProductsPageProps> = ({ products, onAdd, onE
 
   return (
     <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 bg-white p-6 rounded-3xl shadow-sm border border-border-base">
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 bg-[var(--theme-card-bg,white)] p-6 rounded-3xl shadow-sm border border-border-base transition-colors">
         <div className="flex items-center gap-4 flex-1">
           {selectedCategory && (
             <Button 

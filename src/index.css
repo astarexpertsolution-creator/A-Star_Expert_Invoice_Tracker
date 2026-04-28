@@ -4,15 +4,20 @@
 @theme {
   --font-sans: "Inter", ui-sans-serif, system-ui, sans-serif;
   
-  /* Enterprise Modern Palette */
-  --color-bg-main: #FFFFFF;
-  --color-sidebar-bg: #0F0F0F;
-  --color-accent-sage: #4E605D;
-  --color-accent-sage-hover: #3E4E4B;
+  /* Enterprise Modern Palette (Default Base) */
+  --color-bg-main: var(--theme-bg, #FFFFFF);
+  --color-sidebar-bg: var(--theme-sidebar, #0F0F0F);
+  --color-accent-sage: var(--theme-primary, #4E605D);
+  --color-accent-sage-hover: var(--theme-primary-hover, #3E4E4B);
   --color-accent-terracotta: #D17D5D;
-  --color-text-main: #1A1A1A;
-  --color-text-muted: #666666;
-  --color-border-base: #F0F0F0;
+  --color-text-main: var(--theme-text, #1A1A1A);
+  --color-text-muted: var(--theme-muted, #666666);
+  --color-border-base: var(--theme-border, #F0F0F0);
+  
+  /* Modern Variabes */
+  --radius-xl: var(--theme-radius, 1.5rem);
+  --radius-2xl: calc(var(--theme-radius, 1.5rem) * 1.5);
+  --radius-3xl: calc(var(--theme-radius, 1.5rem) * 2);
   
   /* Status Colors (Modern Muted) */
   --color-status-paid-bg: #F0FDF4;

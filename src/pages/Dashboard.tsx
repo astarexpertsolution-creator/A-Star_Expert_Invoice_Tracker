@@ -33,11 +33,11 @@ export const Dashboard: React.FC<{ invoices: Invoice[] }> = ({ invoices }) => {
     <div className="space-y-8 animate-in fade-in duration-500">
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-6">
         {stats.slice(0, 4).map((stat, idx) => (
-          <div key={idx} className="bg-white border border-border-base rounded-3xl p-8 shadow-sm hover:shadow-md transition-all">
+          <div key={idx} className="bg-[var(--theme-card-bg,white)] border border-border-base rounded-3xl p-8 shadow-sm hover:shadow-md transition-all">
             <p className="text-[10px] font-black text-text-muted uppercase tracking-[0.2em] mb-2">{stat.label}</p>
             <div className="flex items-center justify-between">
               <p className={`text-4xl font-black ${stat.color} tracking-tighter`}>{stat.value}</p>
-              <div className="w-10 h-10 bg-bg-main rounded-xl flex items-center justify-center text-stone-300">
+              <div className="w-10 h-10 bg-bg-main rounded-xl flex items-center justify-center text-stone-400">
                 <FileText size={20} />
               </div>
             </div>
