@@ -12,9 +12,11 @@ export enum ProductStatus {
 }
 
 export enum CRMStatus {
-  LEAD = 'Lead',
-  APPOINTMENT = 'Appointment',
-  ONBOARDED = 'Onboarded',
+  YET_TO_MEET = 'Yet to meet',
+  APPOINTMENT_SCHEDULED = 'Appointment scheduled',
+  ENQUIRY_RECEIVED = 'Received Enquiry',
+  QUOTATION_SHARED = 'Shared Quotation',
+  CONVERTED = 'Converted',
 }
 
 export enum DispatchStatus {

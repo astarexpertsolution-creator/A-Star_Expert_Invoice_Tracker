@@ -1,14 +1,46 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { Card, Badge, Button } from '../components/UI';
-import { ShoppingBag, Clock, CheckCircle2, FileUp, FileText, ArrowRight } from 'lucide-react';
+import { ShoppingBag, FileUp, FileText, ArrowRight, Loader2 } from 'lucide-react';
 import { PurchaseOrder } from '../types';
+import { collection, onSnapshot, query, orderBy } from 'firebase/firestore';
+import { db } from '../lib/firebase';
+import { handleFirestoreError, OperationType } from '../lib/firestoreUtils';
 
 export const Orders: React.FC = () => {
-  const purchaseOrders: PurchaseOrder[] = [
-    { id: 'po-01', poNumber: 'PO/2026/KMCH/001', customerId: 'c1', customerName: 'KMCH Hospital', poDate: '2026-04-25', items: [], totalAmount: 145000, status: 'Pending' },
-    { id: 'po-02', poNumber: 'PO/2026/PSG/042', customerId: 'c2', customerName: 'PSG Hospitals', poDate: '2026-04-26', items: [], totalAmount: 78200, status: 'Converted' },
-    { id: 'po-03', poNumber: 'PO/2026/CITY/009', customerId: 'c3', customerName: 'City Clinic', poDate: '2026-04-27', items: [], totalAmount: 12500, status: 'Pending' },
-  ];
+  const [purchaseOrders, setPurchaseOrders] = useState<PurchaseOrder[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const poRef = collection(db, 'purchase_orders');
+    const q = query(poRef, orderBy('createdAt', 'desc'));
+
+    const unsubscribe = onSnapshot(q, (snapshot) => {
+      const pos = snapshot.docs.map(doc => ({
+        id: doc.id,
+        ...doc.data()
+      })) as PurchaseOrder[];
+      setPurchaseOrders(pos);
+      setLoading(false);
+    }, (error) => {
+      handleFirestoreError(error, OperationType.LIST, 'purchase_orders');
+      setLoading(false);
+    });
+
+    return () => unsubscribe();
+  }, []);
+
+  if (loading) {
+    return (
+      <div className="h-64 flex flex-col items-center justify-center gap-4">
+        <Loader2 className="w-8 h-8 text-accent-sage animate-spin" />
+        <p className="text-[10px] font-black uppercase tracking-[0.3em] text-stone-300">Scanning Order Manifest...</p>
+      </div>
+    );
+  }
+
+  const openPoValue = purchaseOrders
+    .filter(po => po.status === 'Pending')
+    .reduce((sum, po) => sum + (po.totalAmount || 0), 0);
 
   return (
     <div className="space-y-6 animate-in fade-in duration-500">
@@ -33,35 +65,41 @@ export const Orders: React.FC = () => {
       </div>
 
       <div className="grid grid-cols-1 gap-4">
-        {purchaseOrders.map((po) => (
-          <Card key={po.id} className="relative group">
-            <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
-              <div className="space-y-1">
-                <div className="flex items-center gap-3">
-                   <h3 className="text-lg font-black text-text-main uppercase tracking-tighter">{po.poNumber}</h3>
-                   <Badge color={po.status === 'Converted' ? 'green' : 'yellow'}>{po.status}</Badge>
+        {purchaseOrders.length > 0 ? (
+          purchaseOrders.map((po) => (
+            <Card key={po.id} className="relative group">
+              <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
+                <div className="space-y-1">
+                  <div className="flex items-center gap-3">
+                    <h3 className="text-lg font-black text-text-main uppercase tracking-tighter">{po.poNumber}</h3>
+                    <Badge color={po.status === 'Converted' ? 'green' : 'yellow'}>{po.status}</Badge>
+                  </div>
+                  <p className="text-sm text-text-muted font-medium">{po.customerName} • Received on {po.poDate}</p>
                 </div>
-                <p className="text-sm text-text-muted font-medium">{po.customerName} • Received on {po.poDate}</p>
-              </div>
 
-              <div className="flex flex-col md:items-end">
-                <p className="text-[10px] font-black text-text-muted uppercase tracking-widest opacity-60">Est. Order Value</p>
-                <p className="text-2xl font-black text-text-main">₹{po.totalAmount.toLocaleString()}</p>
-              </div>
+                <div className="flex flex-col md:items-end">
+                  <p className="text-[10px] font-black text-text-muted uppercase tracking-widest opacity-60">Est. Order Value</p>
+                  <p className="text-2xl font-black text-text-main">₹{po.totalAmount?.toLocaleString() || 0}</p>
+                </div>
 
-              <div className="flex gap-2">
-                <Button variant="outline" size="sm" className="h-10 px-4 text-[10px] font-black uppercase tracking-widest">
-                  View Document
-                </Button>
-                {po.status === 'Pending' && (
-                  <Button variant="primary" size="sm" className="h-10 px-4 text-[10px] font-black uppercase tracking-widest gap-2">
-                    <FileText size={14} /> Convert to Invoice <ArrowRight size={14} />
+                <div className="flex gap-2">
+                  <Button variant="outline" size="sm" className="h-10 px-4 text-[10px] font-black uppercase tracking-widest">
+                    View
                   </Button>
-                )}
+                  {po.status === 'Pending' && (
+                    <Button variant="primary" size="sm" className="h-10 px-4 text-[10px] font-black uppercase tracking-widest gap-2">
+                      <FileText size={14} /> Create Invoice <ArrowRight size={14} />
+                    </Button>
+                  )}
+                </div>
               </div>
-            </div>
-          </Card>
-        ))}
+            </Card>
+          ))
+        ) : (
+          <div className="py-20 text-center bg-stone-50 rounded-[2rem] border border-dashed border-stone-200">
+             <p className="text-xs font-black uppercase tracking-widest text-stone-300">No Orders in Protocol</p>
+          </div>
+        )}
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 pt-4">
@@ -74,10 +112,10 @@ export const Orders: React.FC = () => {
            <div className="space-y-4">
              <div className="flex justify-between items-center p-3 bg-bg-main rounded-xl">
                 <span className="text-xs font-bold text-text-main">Total Open POs</span>
-                <span className="text-lg font-black text-accent-sage">₹225,000</span>
+                <span className="text-lg font-black text-accent-sage">₹{openPoValue.toLocaleString()}</span>
              </div>
              <p className="text-[10px] text-text-muted font-bold uppercase tracking-widest leading-relaxed">
-               Average aging of open POs: <span className="text-text-main">3.2 Days</span>
+               Total {purchaseOrders.filter(p => p.status === 'Pending').length} pending orders required fulfillment.
              </p>
            </div>
         </Card>

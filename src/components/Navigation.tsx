@@ -1,7 +1,6 @@
 import React from 'react';
-import { LayoutDashboard, Package, Users, FileText, CreditCard, ChevronLeft, ChevronRight, Menu, LogOut, Boxes, ShoppingCart, Truck, Palette, Settings2, Plus, Calendar, UserPlus } from 'lucide-react';
+import { LayoutDashboard, Users, FileText, CreditCard, ChevronLeft, ChevronRight, Menu, Boxes, ShoppingCart, Truck, Palette, Calendar, UserPlus } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
-import { useTheme, palettes } from '../lib/ThemeContext';
 
 interface SidebarProps {
   activeTab: string;
@@ -13,13 +12,15 @@ interface SidebarProps {
 const navSections = [
   {
     label: 'Overview',
-    items: [{ id: 'dashboard', label: 'Analytics', icon: LayoutDashboard }]
+    items: [
+      { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard },
+      { id: 'appointments', label: 'Calendar', icon: Calendar }
+    ]
   },
   {
     label: 'Lead Management',
     items: [
       { id: 'leads', label: 'Leads CRM', icon: UserPlus },
-      { id: 'appointments', label: 'Appointments', icon: Calendar },
     ]
   },
   {
@@ -57,7 +58,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ activeTab, setActiveTab, isCol
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             onClick={() => setIsCollapsed(true)}
-            className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[45] lg:hidden"
+            className="fixed inset-0 bg-transparent z-[45] lg:hidden"
           />
         )}
       </AnimatePresence>
@@ -68,7 +69,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ activeTab, setActiveTab, isCol
           width: isCollapsed ? (window.innerWidth < 1024 ? '0px' : '80px') : '220px',
           x: isCollapsed && window.innerWidth < 1024 ? -220 : 0
         }}
-        transition={{ type: 'spring', damping: 25, stiffness: 200 }}
+        transition={{ type: 'spring', damping: 30, stiffness: 300, mass: 0.8 }}
         className={`fixed lg:relative inset-y-0 left-0 bg-sidebar-bg text-[#D6D3CE] flex flex-col z-[50] overflow-hidden transition-colors duration-300`}
       >
       <div className="p-6 flex flex-col mb-4">
@@ -114,7 +115,12 @@ export const Sidebar: React.FC<SidebarProps> = ({ activeTab, setActiveTab, isCol
               {section.items.map((item) => (
                 <button
                   key={item.id}
-                  onClick={() => setActiveTab(item.id)}
+                  onClick={() => {
+                    setActiveTab(item.id);
+                    if (window.innerWidth < 1024) {
+                      setIsCollapsed(true);
+                    }
+                  }}
                   className={`w-full flex items-center gap-4 px-4 py-3 rounded-xl transition-all group ${
                     activeTab === item.id
                       ? 'bg-accent-sage text-white shadow-lg'
@@ -165,7 +171,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ activeTab, setActiveTab, isCol
 
 export const TopBar: React.FC<{ title: string; onMenuClick: () => void }> = ({ title, onMenuClick }) => {
   return (
-    <header className="h-16 md:h-20 px-4 md:px-10 flex items-center justify-between bg-[var(--theme-card-bg,white)]/80 backdrop-blur-md border-b border-border-base sticky top-0 z-40 transition-colors">
+    <header className="h-16 md:h-20 px-4 md:px-10 flex items-center justify-between bg-[var(--theme-card-bg,white)] border-b border-border-base sticky top-0 z-40 transition-colors">
       <div className="flex items-center gap-3">
         <button 
           onClick={onMenuClick}
@@ -188,13 +194,6 @@ export const TopBar: React.FC<{ title: string; onMenuClick: () => void }> = ({ t
           />
           <span className="absolute left-3.5 top-1/2 -translate-y-1/2 text-stone-400 text-xs">🔍</span>
         </div>
-        <button 
-          className="bg-text-main text-bg-main px-4 md:px-6 py-2 md:py-2.5 text-[10px] font-black uppercase tracking-[0.2em] rounded-xl hover:opacity-90 transition-all active:scale-[0.98] shadow-lg shadow-black/5 flex items-center gap-2"
-          style={{ backgroundColor: 'var(--theme-primary)', color: 'white' }}
-        >
-          <Plus size={14} className="shrink-0" />
-          <span className="hidden sm:inline">Create Invoice</span>
-        </button>
       </div>
     </header>
   );

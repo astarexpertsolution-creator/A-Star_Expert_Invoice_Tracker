@@ -15,10 +15,8 @@ import { Login } from './pages/Login';
 import { SAMPLE_PRODUCTS, SAMPLE_CUSTOMERS, SAMPLE_INVOICES } from './constants';
 import { Product, Customer, Invoice, PaymentStatus } from './types';
 import { Card, Button, Input, Select } from './components/UI';
-import { X, Loader2 } from 'lucide-react';
+import { X } from 'lucide-react';
 import { AnimatePresence, motion } from 'motion/react';
-import { onAuthStateChanged, User } from 'firebase/auth';
-import { auth } from './lib/firebase';
 
 export default function App() {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
