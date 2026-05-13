@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Sidebar, TopBar } from './components/Navigation';
+import { Sidebar, TopBar, BottomNav } from './components/Navigation';
 import { Dashboard } from './pages/Dashboard';
 import { ProductsPage } from './pages/Products';
 import { CustomersPage } from './pages/Customers';
@@ -203,7 +203,7 @@ export default function App() {
 
     switch (activeTab) {
       case 'dashboard':
-        return <Dashboard invoices={invoices} leads={leads} />;
+        return <Dashboard invoices={invoices} leads={leads} onNavigate={setActiveTab} />;
       case 'products':
         return (
           <ProductsPage 
@@ -280,6 +280,18 @@ export default function App() {
     }
   };
 
+  const handleBack = () => {
+    if (viewingInvoice) {
+      setViewingInvoice(null);
+    } else if (isCreatingInvoice) {
+      setIsCreatingInvoice(false);
+    } else if (activeTab !== 'dashboard') {
+      setActiveTab('dashboard');
+    }
+  };
+
+  const showBack = activeTab !== 'dashboard' || viewingInvoice !== null || isCreatingInvoice;
+
   return (
     <div className="flex min-h-screen bg-bg-main font-sans antialiased text-text-main">
       <Sidebar 
@@ -297,11 +309,22 @@ export default function App() {
         <TopBar 
           title={isCreatingInvoice ? 'Create Invoice' : viewingInvoice ? `Invoice: ${viewingInvoice.invoiceNumber}` : activeTab} 
           onMenuClick={() => setIsSidebarCollapsed(!isSidebarCollapsed)}
+          showBack={showBack}
+          onBack={handleBack}
         />
-        <div className="flex-1 overflow-y-auto p-4 md:p-8 lg:p-12 max-w-[1600px] mx-auto w-full">
+        <div className="flex-1 overflow-y-auto p-4 md:p-8 lg:p-12 max-w-[1600px] mx-auto w-full pb-20 lg:pb-12">
           {renderContent()}
         </div>
       </main>
+
+      <BottomNav 
+        activeTab={activeTab} 
+        setActiveTab={(tab) => {
+          setActiveTab(tab);
+          setViewingInvoice(null);
+          setIsCreatingInvoice(false);
+        }}
+      />
 
       {/* Payment Modal */}
       <AnimatePresence>

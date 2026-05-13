@@ -169,9 +169,9 @@ export const Sidebar: React.FC<SidebarProps> = ({ activeTab, setActiveTab, isCol
   );
 };
 
-export const TopBar: React.FC<{ title: string; onMenuClick: () => void }> = ({ title, onMenuClick }) => {
+export const TopBar: React.FC<{ title: string; onMenuClick: () => void; onBack?: () => void; showBack?: boolean }> = ({ title, onMenuClick, onBack, showBack }) => {
   return (
-    <header className="h-16 md:h-20 px-4 md:px-10 flex items-center justify-between bg-[var(--theme-card-bg,white)] border-b border-border-base sticky top-0 z-40 transition-colors">
+    <header className="h-16 md:h-20 px-4 md:px-10 flex items-center justify-between bg-[var(--theme-card-bg,white)] border-b border-border-base sticky top-0 z-40 transition-colors shrink-0">
       <div className="flex items-center gap-3">
         <button 
           onClick={onMenuClick}
@@ -179,6 +179,14 @@ export const TopBar: React.FC<{ title: string; onMenuClick: () => void }> = ({ t
         >
           <Menu size={20} />
         </button>
+        {showBack && onBack && (
+          <button 
+            onClick={onBack}
+            className="p-2 -ml-2 text-text-muted hover:bg-bg-main rounded-lg transition-all active:scale-95 group"
+          >
+            <ChevronLeft size={22} className="group-hover:-translate-x-1 transition-transform" />
+          </button>
+        )}
         <div className="hidden sm:flex items-center gap-2">
           <span className="text-[10px] font-black text-text-muted uppercase tracking-[0.2em]">A-Star Portal</span>
           <span className="text-stone-300 dark:text-stone-700">/</span>
@@ -196,5 +204,40 @@ export const TopBar: React.FC<{ title: string; onMenuClick: () => void }> = ({ t
         </div>
       </div>
     </header>
+  );
+};
+
+export const BottomNav: React.FC<{ activeTab: string; setActiveTab: (tab: string) => void }> = ({ activeTab, setActiveTab }) => {
+  const items = [
+    { id: 'dashboard', label: 'Home', icon: LayoutDashboard },
+    { id: 'leads', label: 'Leads', icon: UserPlus },
+    { id: 'invoices', label: 'Invoices', icon: FileText },
+    { id: 'appointments', label: 'Calendar', icon: Calendar },
+    { id: 'customers', label: 'Clients', icon: Users },
+  ];
+
+  return (
+    <nav className="fixed bottom-0 left-0 right-0 h-16 bg-white/80 backdrop-blur-md border-t border-border-base flex items-center justify-around px-2 z-50 lg:hidden safe-area-inset-bottom">
+      {items.map((item) => (
+        <button
+          key={item.id}
+          onClick={() => setActiveTab(item.id)}
+          className={`flex flex-col items-center justify-center gap-1 flex-1 py-1 transition-all ${
+            activeTab === item.id ? 'text-accent-sage' : 'text-stone-400'
+          }`}
+          style={{ color: activeTab === item.id ? 'var(--theme-primary)' : undefined }}
+        >
+          <item.icon size={20} className={activeTab === item.id ? 'scale-110' : ''} />
+          <span className="text-[9px] font-black uppercase tracking-widest">{item.label}</span>
+          {activeTab === item.id && (
+            <motion.div 
+              layoutId="bottom-nav-indicator"
+              className="absolute -top-px w-8 h-1 bg-accent-sage rounded-full"
+              style={{ backgroundColor: 'var(--theme-primary)' }}
+            />
+          )}
+        </button>
+      ))}
+    </nav>
   );
 };

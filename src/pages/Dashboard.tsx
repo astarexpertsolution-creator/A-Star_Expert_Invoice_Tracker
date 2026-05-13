@@ -1,22 +1,18 @@
 import React from 'react';
 import { Card } from '../components/UI';
-import { DollarSign, FileText, CheckCircle, Clock, AlertCircle, ShoppingCart } from 'lucide-react';
+import { DollarSign, FileText, CheckCircle, Clock, AlertCircle, ShoppingCart, UserPlus, Users, Calendar, Package, Truck, LayoutDashboard } from 'lucide-react';
 import { PaymentStatus, Invoice, Lead, CRMStatus } from '../types';
-import { SAMPLE_INVOICES } from '../constants';
 import { Badge } from '../components/UI';
+import { motion } from 'motion/react';
 
-export const Dashboard: React.FC<{ invoices: Invoice[], leads: Lead[] }> = ({ invoices, leads }) => {
+export const Dashboard: React.FC<{ 
+  invoices: Invoice[], 
+  leads: Lead[],
+  onNavigate: (tab: string) => void 
+}> = ({ invoices, leads, onNavigate }) => {
   const totalAmount = invoices.reduce((acc, inv) => acc + inv.grandTotal, 0);
   const totalPaid = invoices.reduce((acc, inv) => acc + inv.paidAmount, 0);
   const pendingAmount = totalAmount - totalPaid;
-
-  const pipeline = [
-    { label: 'Leads', count: leads.filter(l => l.status === CRMStatus.YET_TO_MEET).length, color: 'bg-stone-100' },
-    { label: 'Meetings', count: leads.filter(l => l.status === CRMStatus.MEETING_COMPLETED).length, color: 'bg-blue-50' },
-    { label: 'Enquiries', count: leads.filter(l => l.status === CRMStatus.ENQUIRY_RECEIVED).length, color: 'bg-orange-50' },
-    { label: 'Quotes', count: leads.filter(l => l.status === CRMStatus.QUOTATION_SHARED).length, color: 'bg-indigo-50' },
-    { label: 'POs', count: leads.filter(l => l.status === CRMStatus.PO_RECEIVED).length, color: 'bg-emerald-50' },
-  ];
 
   const stats = [
     { label: 'Total', value: invoices.length, color: 'text-text-main', border: 'border-border-base' },
@@ -39,54 +35,49 @@ export const Dashboard: React.FC<{ invoices: Invoice[], leads: Lead[] }> = ({ in
 
   return (
     <div className="space-y-6 md:space-y-8 animate-in fade-in duration-500">
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6">
-        {stats.slice(0, 4).map((stat, idx) => (
-          <div key={idx} className="bg-[var(--theme-card-bg,white)] border border-border-base rounded-3xl p-6 md:p-8 shadow-sm hover:shadow-md transition-all">
-            <p className="text-[10px] font-black text-text-muted uppercase tracking-[0.2em] mb-2">{stat.label}</p>
-            <div className="flex items-center justify-between">
-              <p className={`text-3xl md:text-4xl font-black ${stat.color} tracking-tighter`}>{stat.value}</p>
-              <div className="w-10 h-10 bg-bg-main rounded-xl flex items-center justify-center text-text-muted transition-colors">
-                <FileText size={20} />
-              </div>
-            </div>
+      {/* Condensed Stats Row */}
+      <div className="flex flex-nowrap overflow-x-auto gap-4 pb-4 no-scrollbar">
+        {[
+          { label: 'Total', value: invoices.length, color: 'text-stone-900', bg: 'bg-white' },
+          { label: 'Paid', value: invoices.filter(i => i.status === PaymentStatus.PAID).length, color: 'text-emerald-600', bg: 'bg-emerald-50/30' },
+          { label: 'Unpaid', value: invoices.filter(i => i.status === PaymentStatus.UNPAID).length, color: 'text-amber-600', bg: 'bg-amber-50/30' },
+          { label: 'Partial', value: invoices.filter(i => i.status === PaymentStatus.PARTIALLY_PAID).length, color: 'text-blue-600', bg: 'bg-blue-50/30' },
+          { label: 'Total Value', value: `₹${(totalAmount / 1000).toFixed(1)}k`, color: 'text-indigo-600', bg: 'bg-indigo-50/30' },
+          { label: 'Open PO', value: `₹${(pendingAmount * 1.2 / 1000).toFixed(1)}k`, color: 'text-rose-600', bg: 'bg-rose-50/30' },
+        ].map((stat, idx) => (
+          <div key={idx} className={`${stat.bg} border border-stone-200 rounded-2xl p-4 min-w-[140px] flex-1 shadow-sm transition-all hover:border-stone-300`}>
+            <p className="text-[9px] font-black text-stone-400 uppercase tracking-widest mb-1">{stat.label}</p>
+            <p className={`text-lg font-black ${stat.color} tracking-tighter`}>{stat.value}</p>
           </div>
         ))}
-        <div className="col-span-full grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-2 gap-4 md:gap-6">
-           <div className="bg-text-main dark:bg-zinc-900 border border-text-main dark:border-zinc-800 rounded-3xl p-6 md:p-8 text-white shadow-xl shadow-black/5 transition-colors">
-            <p className="text-[10px] font-black text-stone-400 dark:text-stone-500 uppercase tracking-[0.2em] mb-2">Total Value</p>
-            <p className="text-2xl md:text-3xl font-black tracking-tighter">₹{(totalAmount / 1000).toFixed(1)}k</p>
-            <div className="mt-4 flex items-center gap-2">
-              <div className="w-6 h-1 bg-emerald-500 rounded-full"></div>
-              <p className="text-[10px] uppercase font-bold text-stone-500 dark:text-stone-600">Collected: ₹{(totalPaid / 1000).toFixed(1)}k</p>
-            </div>
-          </div>
-          <div className="bg-accent-sage border border-accent-sage rounded-3xl p-6 md:p-8 text-white shadow-xl shadow-black/5 transition-colors">
-            <p className="text-[10px] font-black text-white/60 uppercase tracking-[0.2em] mb-2">Open PO Value</p>
-            <p className="text-2xl md:text-3xl font-black tracking-tighter">₹{(pendingAmount * 1.2 / 1000).toFixed(1)}k</p>
-             <div className="mt-4 flex items-center gap-2">
-              <div className="w-6 h-1 bg-white/30 rounded-full"></div>
-              <p className="text-[10px] uppercase font-bold text-white/60">Supplier Fulfillment Pending</p>
-            </div>
-          </div>
-        </div>
       </div>
 
-      <div className="bg-white rounded-[2rem] border border-stone-200 p-8 shadow-sm">
+      <div className="bg-stone-50/50 rounded-[2rem] border border-stone-200/60 p-8 shadow-sm">
         <div className="flex items-center justify-between mb-8">
-           <h3 className="text-sm font-black uppercase tracking-widest text-stone-400">Sales Pipeline Efficiency</h3>
-           <div className="flex items-center gap-4">
-             <div className="flex items-center gap-2">
-               <div className="w-2 h-2 rounded-full bg-emerald-500"></div>
-               <span className="text-[10px] font-bold text-stone-400 uppercase">Active Fulfillment</span>
-             </div>
-           </div>
+           <h3 className="text-sm font-black uppercase tracking-widest text-stone-400">Jump to Module</h3>
         </div>
-        <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
-          {pipeline.map((p, idx) => (
-            <div key={idx} className={`${p.color} p-6 rounded-2xl border border-stone-100/50 flex flex-col items-center justify-center gap-2 transition-transform hover:scale-105 cursor-default`}>
-              <span className="text-3xl font-black text-stone-900">{p.count}</span>
-              <span className="text-[9px] font-black uppercase tracking-widest text-stone-400">{p.label}</span>
-            </div>
+        <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-7 gap-4">
+          {[
+            { id: 'leads', label: 'Leads', icon: UserPlus, color: 'text-indigo-600', bg: 'bg-indigo-50' },
+            { id: 'invoices', label: 'Invoices', icon: FileText, color: 'text-blue-600', bg: 'bg-blue-50' },
+            { id: 'appointments', label: 'Calendar', icon: Calendar, color: 'text-emerald-600', bg: 'bg-emerald-50' },
+            { id: 'customers', label: 'Clients', icon: Users, color: 'text-amber-600', bg: 'bg-amber-50' },
+            { id: 'orders', label: 'Orders', icon: ShoppingCart, color: 'text-rose-600', bg: 'bg-rose-50' },
+            { id: 'suppliers', label: 'Suppliers', icon: Truck, color: 'text-stone-600', bg: 'bg-stone-100' },
+            { id: 'products', label: 'Inventory', icon: Package, color: 'text-teal-600', bg: 'bg-teal-50' },
+          ].map((m) => (
+            <motion.button 
+              key={m.id} 
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
+              onClick={() => onNavigate(m.id)}
+              className="bg-white p-6 rounded-2xl border border-stone-100 shadow-sm flex flex-col items-center justify-center gap-3 transition-all hover:shadow-md hover:border-stone-200 group"
+            >
+              <div className={`w-12 h-12 ${m.bg} ${m.color} rounded-xl flex items-center justify-center group-hover:scale-110 transition-transform`}>
+                <m.icon size={24} />
+              </div>
+              <span className="text-[10px] font-black uppercase tracking-widest text-stone-900">{m.label}</span>
+            </motion.button>
           ))}
         </div>
       </div>
@@ -132,24 +123,33 @@ export const Dashboard: React.FC<{ invoices: Invoice[], leads: Lead[] }> = ({ in
 
         <div className="space-y-6">
           <div className="grid grid-cols-1 gap-4">
-              <button className="w-full bg-[var(--theme-card-bg,white)] hover:bg-bg-main border border-border-base rounded-2xl p-6 flex items-center gap-4 transition-all group shadow-sm active:scale-[0.98]">
+              <button 
+                onClick={() => onNavigate('leads')}
+                className="w-full bg-[var(--theme-card-bg,white)] hover:bg-bg-main border border-border-base rounded-2xl p-6 flex items-center gap-4 transition-all group shadow-sm active:scale-[0.98]"
+              >
                 <div className="w-12 h-12 bg-indigo-50 dark:bg-indigo-900/20 rounded-xl flex items-center justify-center text-xl group-hover:scale-110 transition-transform">🎯</div>
                 <div className="text-left">
                   <span className="block text-xs font-black text-text-main uppercase tracking-widest">Add Lead</span>
                   <span className="text-[10px] text-text-muted font-bold uppercase mt-0.5">Opportunity Entry</span>
                 </div>
               </button>
-              <button className="w-full bg-[var(--theme-card-bg,white)] hover:bg-bg-main border border-border-base rounded-2xl p-6 flex items-center gap-4 transition-all group shadow-sm active:scale-[0.98]">
+              <button 
+                onClick={() => onNavigate('customers')}
+                className="w-full bg-[var(--theme-card-bg,white)] hover:bg-bg-main border border-border-base rounded-2xl p-6 flex items-center gap-4 transition-all group shadow-sm active:scale-[0.98]"
+              >
                 <div className="w-12 h-12 bg-emerald-50 dark:bg-emerald-900/20 rounded-xl flex items-center justify-center text-xl group-hover:scale-110 transition-transform">👥</div>
                 <div className="text-left">
                   <span className="block text-xs font-black text-text-main uppercase tracking-widest">Add Customer</span>
                   <span className="text-[10px] text-text-muted font-bold uppercase mt-0.5">Contact Sync</span>
                 </div>
               </button>
-              <button className="w-full bg-[var(--theme-card-bg,white)] hover:bg-bg-main border border-border-base rounded-2xl p-6 flex items-center gap-4 transition-all group shadow-sm active:scale-[0.98]">
+              <button 
+                onClick={() => onNavigate('invoices')}
+                className="w-full bg-[var(--theme-card-bg,white)] hover:bg-bg-main border border-border-base rounded-2xl p-6 flex items-center gap-4 transition-all group shadow-sm active:scale-[0.98]"
+              >
                 <div className="w-12 h-12 bg-amber-50 dark:bg-amber-900/20 rounded-xl flex items-center justify-center text-xl group-hover:scale-110 transition-transform">💰</div>
                 <div className="text-left">
-                  <span className="block text-xs font-black text-text-main uppercase tracking-widest">Record Payment</span>
+                  <span className="block text-xs font-black text-text-main uppercase tracking-widest">Manage Payments</span>
                   <span className="text-[10px] text-text-muted font-bold uppercase mt-0.5">Direct Entry</span>
                 </div>
               </button>
