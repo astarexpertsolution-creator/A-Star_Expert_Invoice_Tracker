@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Card, Button, Badge } from '../components/UI';
 import { 
   ChevronLeft, 
@@ -12,7 +12,14 @@ import {
   MessageSquare,
   Plus,
   MoreVertical,
-  X
+  X,
+  Target,
+  HelpCircle,
+  FileText,
+  Receipt,
+  Edit3,
+  CalendarClock,
+  Trash2
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { 
@@ -33,7 +40,11 @@ enum TrackerType {
   PAYMENT = 'payment',
   APPOINTMENT = 'appointment',
   ORDER = 'order',
-  DELIVERY = 'delivery'
+  DELIVERY = 'delivery',
+  LEAD = 'lead',
+  ENQUIRY = 'enquiry',
+  QUOTATION = 'quotation',
+  INVOICE = 'invoice'
 }
 
 interface ActionItem {
@@ -42,6 +53,7 @@ interface ActionItem {
   title: string;
   description: string;
   time?: string;
+  date?: string | any;
   status: 'pending' | 'completed';
   comments?: string;
   amount?: number;
@@ -58,28 +70,127 @@ const generateMockData = (): Record<string, ActionItem[]> => {
     { id: '2', type: TrackerType.APPOINTMENT, title: 'PSG Hospital Demo', description: 'Real-time PCR machine demonstration', time: '10:30 AM', status: 'pending' },
     { id: '3', type: TrackerType.ORDER, title: 'Bulk Oligos Order', description: 'Order from Molecular Research Lab', status: 'pending' },
     { id: '4', type: TrackerType.DELIVERY, title: 'Cold Chain Dispatch', description: 'Reagents for Apollo Diagnostics', status: 'pending' },
-    { id: '5', type: TrackerType.PAYMENT, title: 'Tarsons Monthly Clearance', description: 'Consumables payment due', amount: 45000, status: 'completed', comments: 'Cleared via NEFT' },
+    { id: '5', type: TrackerType.LEAD, title: 'New Hospital Prospect', description: 'Kovai Medical Center follow-up', status: 'pending' },
+    { id: '6', type: TrackerType.ENQUIRY, title: 'DNA Extractor Inquiry', description: 'Technical specs requested by Amrita Uni', status: 'pending' },
+    { id: '7', type: TrackerType.QUOTATION, title: 'Thermal Cycler Quote', description: 'Submit formal bid for ICMR project', status: 'pending' },
+    { id: '8', type: TrackerType.INVOICE, title: 'Supply Batch #402', description: 'Generate invoice for SRM University', status: 'pending' },
   ];
 
-  // Distribute items across the month
-  for (let i = 0; i < 15; i++) {
-    const day = Math.floor(Math.random() * 28) + 1;
-    const dateKey = format(new Date(now.getFullYear(), now.getMonth(), day), 'yyyy-MM-dd');
+  // Distribute items across the month, including some in the past to test rollover
+  for (let i = 0; i < 30; i++) {
+    const dayOffset = Math.floor(Math.random() * 20) - 10; // -10 to +10 days
+    const date = new Date(now.getFullYear(), now.getMonth(), now.getDate() + dayOffset);
+    const dateKey = format(date, 'yyyy-MM-dd');
+    
     if (!data[dateKey]) data[dateKey] = [];
-    data[dateKey].push({ ...items[Math.floor(Math.random() * items.length)], id: Math.random().toString(36).substr(2, 9) });
+    
+    const randomItem = items[Math.floor(Math.random() * items.length)];
+    // Randomize status: past items are more likely to be pending if we want to see rollover
+    const status = Math.random() > 0.3 ? 'pending' : 'completed';
+    
+    data[dateKey].push({ 
+      ...randomItem, 
+      status: status as 'pending' | 'completed',
+      id: Math.random().toString(36).substr(2, 9) 
+    });
   }
 
   return data;
 };
 
-export const AppointmentsPage: React.FC = () => {
+export const AppointmentsPage: React.FC<{ externalItems?: ActionItem[] }> = ({ externalItems = [] }) => {
   const [currentMonth, setCurrentMonth] = useState(new Date());
   const [selectedDate, setSelectedDate] = useState(new Date());
   const [allData, setAllData] = useState<Record<string, ActionItem[]>>(generateMockData());
+
+  useEffect(() => {
+    if (externalItems.length > 0) {
+      setAllData(prev => {
+        const newData = { ...prev };
+        externalItems.forEach(item => {
+          let dateObj: Date;
+          try {
+            // Handle Firestore timestamp OR string
+            dateObj = item.date?.toDate ? item.date.toDate() : new Date(item.date);
+          } catch (e) {
+            dateObj = new Date();
+          }
+          
+          if (isNaN(dateObj.getTime())) dateObj = new Date();
+          
+          const dateKey = format(dateObj, 'yyyy-MM-dd');
+          if (!newData[dateKey]) newData[dateKey] = [];
+          
+          if (!newData[dateKey].some(i => i.id === item.id)) {
+            newData[dateKey].push(item);
+          }
+        });
+        return newData;
+      });
+    }
+  }, [externalItems]);
+
   const [filter, setFilter] = useState<TrackerType | 'all'>('all');
+  
+  // Modal States
   const [isCommentModalOpen, setIsCommentModalOpen] = useState(false);
+  const [isRescheduleModalOpen, setIsRescheduleModalOpen] = useState(false);
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+  
   const [activeItem, setActiveItem] = useState<ActionItem | null>(null);
   const [comment, setComment] = useState('');
+  const [rescheduleDate, setRescheduleDate] = useState(format(new Date(), 'yyyy-MM-dd'));
+  const [editForm, setEditForm] = useState<Partial<ActionItem>>({});
+
+  // Rollover pending items from past dates to today
+  React.useEffect(() => {
+    const todayKey = format(new Date(), 'yyyy-MM-dd');
+    let hasChanges = false;
+    const newData = { ...allData };
+
+    Object.keys(newData).forEach(dateKey => {
+      // If date is in the past
+      if (dateKey < todayKey) {
+        const pastItems = newData[dateKey];
+        const pendingItems = pastItems.filter(item => item.status === 'pending');
+        
+        if (pendingItems.length > 0) {
+          hasChanges = true;
+          
+          // Remove pending items from past date
+          newData[dateKey] = pastItems.filter(item => item.status !== 'pending');
+          
+          // Move them to today
+          if (!newData[todayKey]) newData[todayKey] = [];
+          
+          // Add a "Delayed" prefix or property if needed, but here we just shift them
+          const shiftedItems = pendingItems.map(item => ({
+            ...item,
+            title: item.title.startsWith('[ROLLOVER]') ? item.title : `[ROLLOVER] ${item.title}`
+          }));
+          
+          newData[todayKey] = [...newData[todayKey], ...shiftedItems];
+          
+          // If past date is now empty, delete the key
+          if (newData[dateKey].length === 0) {
+            delete newData[dateKey];
+          }
+        }
+      }
+    });
+
+    if (hasChanges) {
+      setAllData(newData);
+      console.log('Rollover complete: Pending items moved to today.');
+    }
+  }, []); // Run once on mount
+
+  // Sync selected date when month changes to keep Day Protocol relevant
+  React.useEffect(() => {
+    if (!isSameMonth(selectedDate, currentMonth)) {
+      setSelectedDate(startOfMonth(currentMonth));
+    }
+  }, [currentMonth, selectedDate]);
 
   const nextMonth = () => setCurrentMonth(addMonths(currentMonth, 1));
   const prevMonth = () => setCurrentMonth(subMonths(currentMonth, 1));
@@ -118,6 +229,10 @@ export const AppointmentsPage: React.FC = () => {
             { id: TrackerType.ORDER, label: 'Orders', color: 'bg-orange-500' },
             { id: TrackerType.DELIVERY, label: 'Deliveries', color: 'bg-purple-500' },
             { id: TrackerType.APPOINTMENT, label: 'Appointments', color: 'bg-blue-500' },
+            { id: TrackerType.LEAD, label: 'Leads', color: 'bg-red-500' },
+            { id: TrackerType.ENQUIRY, label: 'Enquiries', color: 'bg-amber-500' },
+            { id: TrackerType.QUOTATION, label: 'Quotations', color: 'bg-cyan-500' },
+            { id: TrackerType.INVOICE, label: 'Invoices', color: 'bg-indigo-500' },
           ].map((cat) => (
             <Button 
               key={cat.id}
@@ -186,7 +301,11 @@ export const AppointmentsPage: React.FC = () => {
                     item.type === TrackerType.PAYMENT ? 'bg-emerald-500' :
                     item.type === TrackerType.APPOINTMENT ? 'bg-blue-500' :
                     item.type === TrackerType.ORDER ? 'bg-orange-500' :
-                    'bg-purple-500'
+                    item.type === TrackerType.DELIVERY ? 'bg-purple-500' :
+                    item.type === TrackerType.LEAD ? 'bg-red-500' :
+                    item.type === TrackerType.ENQUIRY ? 'bg-amber-500' :
+                    item.type === TrackerType.QUOTATION ? 'bg-cyan-500' :
+                    'bg-indigo-500'
                   }`}
                 />
               ))}
@@ -213,6 +332,69 @@ export const AppointmentsPage: React.FC = () => {
     setIsCommentModalOpen(true);
   };
 
+  const handleOpenReschedule = (item: ActionItem) => {
+    setActiveItem(item);
+    setRescheduleDate(format(selectedDate, 'yyyy-MM-dd'));
+    setIsRescheduleModalOpen(true);
+  };
+
+  const handleOpenEdit = (item: ActionItem) => {
+    setActiveItem(item);
+    setEditForm(item);
+    setIsEditModalOpen(true);
+  };
+
+  const submitReschedule = () => {
+    if (!activeItem || !rescheduleDate) return;
+    
+    const sourceDateKey = format(selectedDate, 'yyyy-MM-dd');
+    const targetDateKey = rescheduleDate;
+    
+    const newData = { ...allData };
+    
+    // Remove from source
+    newData[sourceDateKey] = newData[sourceDateKey].filter(it => it.id !== activeItem.id);
+    
+    // Add to target with comment
+    const updatedItem = { 
+      ...activeItem, 
+      comments: `Rescheduled: ${comment}${activeItem.comments ? ' | ' + activeItem.comments : ''}` 
+    };
+    
+    if (!newData[targetDateKey]) newData[targetDateKey] = [];
+    newData[targetDateKey].push(updatedItem);
+    
+    setAllData(newData);
+    setIsRescheduleModalOpen(false);
+    setComment('');
+    setActiveItem(null);
+  };
+
+  const submitEdit = () => {
+    if (!activeItem) return;
+    
+    const dateKey = format(selectedDate, 'yyyy-MM-dd');
+    const updatedItems = allData[dateKey].map(it => 
+      it.id === activeItem.id ? { ...it, ...editForm } as ActionItem : it
+    );
+
+    setAllData({
+      ...allData,
+      [dateKey]: updatedItems
+    });
+
+    setIsEditModalOpen(false);
+    setActiveItem(null);
+  };
+
+  const deleteItem = (id: string) => {
+    const dateKey = format(selectedDate, 'yyyy-MM-dd');
+    setAllData({
+      ...allData,
+      [dateKey]: allData[dateKey].filter(it => it.id !== id)
+    });
+  };
+
   const submitCompletion = () => {
     if (!activeItem) return;
     
@@ -233,23 +415,6 @@ export const AppointmentsPage: React.FC = () => {
 
   const selectedDateItems = (allData[format(selectedDate, 'yyyy-MM-dd')] || []).filter(item => filter === 'all' || item.type === filter);
 
-  // Calculate Monthly Summary
-  const monthlyItems = (Object.entries(allData) as [string, ActionItem[]][]).reduce((acc: ActionItem[], [dateKey, items]) => {
-    const date = new Date(dateKey);
-    if (isSameMonth(date, currentMonth)) {
-      acc.push(...items);
-    }
-    return acc;
-  }, []);
-
-  const openItems = monthlyItems.filter(item => item.status === 'pending');
-  const summaryByStatus = {
-    [TrackerType.PAYMENT]: openItems.filter(it => it.type === TrackerType.PAYMENT).length,
-    [TrackerType.ORDER]: openItems.filter(it => it.type === TrackerType.ORDER).length,
-    [TrackerType.DELIVERY]: openItems.filter(it => it.type === TrackerType.DELIVERY).length,
-    [TrackerType.APPOINTMENT]: openItems.filter(it => it.type === TrackerType.APPOINTMENT).length,
-  };
-
   return (
     <div className="space-y-8 animate-in fade-in duration-700">
       <div className="grid grid-cols-1 xl:grid-cols-12 gap-8 items-start">
@@ -260,59 +425,28 @@ export const AppointmentsPage: React.FC = () => {
           {renderCells()}
           
           {/* Legend */}
-          <div className="flex flex-wrap gap-6 px-4 py-3 bg-stone-50 rounded-2xl border border-stone-200/50">
-            <div className="flex items-center gap-2">
-              <div className="w-2.5 h-2.5 rounded-full bg-emerald-500 shadow-sm" />
-              <span className="text-[10px] font-black uppercase tracking-widest text-stone-600">Payments</span>
-            </div>
-            <div className="flex items-center gap-2">
-              <div className="w-2.5 h-2.5 rounded-full bg-blue-500 shadow-sm" />
-              <span className="text-[10px] font-black uppercase tracking-widest text-stone-600">Appointments</span>
-            </div>
-            <div className="flex items-center gap-2">
-              <div className="w-2.5 h-2.5 rounded-full bg-orange-500 shadow-sm" />
-              <span className="text-[10px] font-black uppercase tracking-widest text-stone-600">Orders</span>
-            </div>
-            <div className="flex items-center gap-2">
-              <div className="w-2.5 h-2.5 rounded-full bg-purple-500 shadow-sm" />
-              <span className="text-[10px] font-black uppercase tracking-widest text-stone-600">Deliveries</span>
-            </div>
+          <div className="flex flex-wrap gap-x-6 gap-y-3 px-4 py-3 bg-stone-50 rounded-2xl border border-stone-200/50">
+            {[
+              { color: 'bg-emerald-500', label: 'Payments' },
+              { color: 'bg-blue-500', label: 'Appointments' },
+              { color: 'bg-orange-500', label: 'Orders' },
+              { color: 'bg-purple-500', label: 'Deliveries' },
+              { color: 'bg-red-500', label: 'Leads' },
+              { color: 'bg-amber-500', label: 'Enquiries' },
+              { color: 'bg-cyan-500', label: 'Quotations' },
+              { color: 'bg-indigo-500', label: 'Invoices' },
+            ].map(item => (
+              <div key={item.label} className="flex items-center gap-2">
+                <div className={`w-2.5 h-2.5 rounded-full ${item.color} shadow-sm`} />
+                <span className="text-[10px] font-black uppercase tracking-widest text-stone-600">{item.label}</span>
+              </div>
+            ))}
           </div>
         </div>
 
         {/* Action Items Column */}
         <div className="xl:col-span-4 space-y-6">
-          {/* Monthly Summary Card */}
-          <Card className="p-6 bg-stone-900 border-none text-white shadow-2xl">
-            <h3 className="text-xs font-black uppercase tracking-[0.3em] text-accent-sage mb-6">Monthly Protocol Summary</h3>
-            <div className="grid grid-cols-2 gap-4">
-              <div className="p-4 bg-white/5 rounded-2xl border border-white/10">
-                <p className="text-[8px] font-bold text-stone-400 uppercase tracking-widest mb-1">Open Payments</p>
-                <p className="text-xl font-black">{summaryByStatus[TrackerType.PAYMENT]}</p>
-              </div>
-              <div className="p-4 bg-white/5 rounded-2xl border border-white/10">
-                <p className="text-[8px] font-bold text-stone-400 uppercase tracking-widest mb-1">Pending Orders</p>
-                <p className="text-xl font-black">{summaryByStatus[TrackerType.ORDER]}</p>
-              </div>
-              <div className="p-4 bg-white/5 rounded-2xl border border-white/10">
-                <p className="text-[8px] font-bold text-stone-400 uppercase tracking-widest mb-1">Deliveries</p>
-                <p className="text-xl font-black">{summaryByStatus[TrackerType.DELIVERY]}</p>
-              </div>
-              <div className="p-4 bg-white/5 rounded-2xl border border-white/10">
-                <p className="text-[8px] font-bold text-stone-400 uppercase tracking-widest mb-1">Appointments</p>
-                <p className="text-xl font-black">{summaryByStatus[TrackerType.APPOINTMENT]}</p>
-              </div>
-            </div>
-            <div className="mt-6 pt-6 border-t border-white/10 flex items-center justify-between">
-              <div>
-                <p className="text-[8px] font-bold text-stone-400 uppercase tracking-widest">Total Active Invariants</p>
-                <p className="text-2xl font-black text-accent-sage">{openItems.length}</p>
-              </div>
-              <CheckCircle2 className="text-white/20" size={32} />
-            </div>
-          </Card>
-
-          <div className="flex items-center justify-between mt-8 mb-4">
+          <div className="flex items-center justify-between mb-4">
              <div>
                 <h3 className="text-sm font-black text-text-main uppercase tracking-widest">Day Protocol</h3>
                 <p className="text-[10px] text-text-muted font-bold uppercase tracking-widest">{format(selectedDate, 'EEEE, MMM do')}</p>
@@ -339,12 +473,20 @@ export const AppointmentsPage: React.FC = () => {
                           item.type === TrackerType.PAYMENT ? 'bg-emerald-50 text-emerald-600' :
                           item.type === TrackerType.APPOINTMENT ? 'bg-blue-50 text-blue-600' :
                           item.type === TrackerType.ORDER ? 'bg-orange-50 text-orange-600' :
-                          'bg-purple-50 text-purple-600'
+                          item.type === TrackerType.DELIVERY ? 'bg-purple-50 text-purple-600' :
+                          item.type === TrackerType.LEAD ? 'bg-red-50 text-red-600' :
+                          item.type === TrackerType.ENQUIRY ? 'bg-amber-50 text-amber-600' :
+                          item.type === TrackerType.QUOTATION ? 'bg-cyan-50 text-cyan-600' :
+                          'bg-indigo-50 text-indigo-600'
                         }`}>
                           {item.type === TrackerType.PAYMENT && <DollarSign size={18} />}
                           {item.type === TrackerType.APPOINTMENT && <CalendarIcon size={18} />}
                           {item.type === TrackerType.ORDER && <Package size={18} />}
                           {item.type === TrackerType.DELIVERY && <Truck size={18} />}
+                          {item.type === TrackerType.LEAD && <Target size={18} />}
+                          {item.type === TrackerType.ENQUIRY && <HelpCircle size={18} />}
+                          {item.type === TrackerType.QUOTATION && <FileText size={18} />}
+                          {item.type === TrackerType.INVOICE && <Receipt size={18} />}
                         </div>
                         <div className="flex-1 min-w-0">
                           <h4 className={`text-sm font-black tracking-tight ${item.status === 'completed' ? 'text-stone-400 line-through' : 'text-text-main'}`}>
@@ -376,9 +518,26 @@ export const AppointmentsPage: React.FC = () => {
                         </div>
                         
                         <div className="flex flex-col items-end gap-2">
-                          <button className="text-stone-300 hover:text-stone-500">
-                            <MoreVertical size={16} />
-                          </button>
+                          <div className="flex items-center gap-1">
+                            <button 
+                              onClick={() => handleOpenEdit(item)}
+                              className="p-1.5 text-stone-400 hover:text-stone-900 hover:bg-stone-100 rounded-lg transition-colors"
+                            >
+                              <Edit3 size={14} />
+                            </button>
+                            <button 
+                              onClick={() => handleOpenReschedule(item)}
+                              className="p-1.5 text-stone-400 hover:text-stone-900 hover:bg-stone-100 rounded-lg transition-colors"
+                            >
+                              <CalendarClock size={14} />
+                            </button>
+                            <button 
+                              onClick={() => deleteItem(item.id)}
+                              className="p-1.5 text-stone-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                            >
+                              <Trash2 size={14} />
+                            </button>
+                          </div>
                         </div>
                       </div>
 
@@ -458,6 +617,148 @@ export const AppointmentsPage: React.FC = () => {
                   </Button>
                   <Button variant="primary" className="flex-1 h-12 uppercase tracking-widest text-[10px] font-black shadow-xl" onClick={submitCompletion}>
                     Confirm Protocol
+                  </Button>
+                </div>
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
+
+      {/* Reschedule Modal */}
+      <AnimatePresence>
+        {isRescheduleModalOpen && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+            <motion.div 
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              onClick={() => setIsRescheduleModalOpen(false)}
+              className="absolute inset-0 bg-stone-900/60 backdrop-blur-sm"
+            />
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95, y: 20 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.95, y: 20 }}
+              className="relative w-full max-w-md bg-white rounded-[2rem] shadow-2xl overflow-hidden"
+            >
+              <div className="p-6 border-b border-stone-100 flex items-center justify-between">
+                <div>
+                  <h3 className="text-base font-black text-text-main uppercase tracking-tight">Reschedule Protocol</h3>
+                  <p className="text-[10px] text-text-muted font-bold uppercase tracking-[0.2em] mt-1">Move item to different coordinate</p>
+                </div>
+                <button onClick={() => setIsRescheduleModalOpen(false)} className="text-stone-400 hover:text-stone-900">
+                  <X size={20} />
+                </button>
+              </div>
+
+              <div className="p-6 space-y-6">
+                <div className="space-y-2">
+                  <label className="text-[10px] font-black uppercase tracking-widest text-text-muted ml-1">New Target Date</label>
+                  <input 
+                    type="date"
+                    className="w-full p-4 bg-stone-50 border border-stone-200 rounded-2xl text-sm focus:ring-2 focus:ring-accent-sage/20 focus:border-accent-sage outline-none transition-all font-bold"
+                    value={rescheduleDate}
+                    onChange={(e) => setRescheduleDate(e.target.value)}
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <label className="text-[10px] font-black uppercase tracking-widest text-text-muted ml-1">Reason for Rescheduling</label>
+                  <textarea 
+                    className="w-full min-h-[100px] p-4 bg-stone-50 border border-stone-200 rounded-2xl text-sm focus:ring-2 focus:ring-accent-sage/20 focus:border-accent-sage outline-none transition-all resize-none"
+                    placeholder="Enter reason for delay or shift..."
+                    value={comment}
+                    onChange={(e) => setComment(e.target.value)}
+                  />
+                </div>
+
+                <div className="flex gap-4">
+                  <Button variant="outline" className="flex-1 h-12 uppercase tracking-widest text-[10px] font-black" onClick={() => setIsRescheduleModalOpen(false)}>
+                    Cancel
+                  </Button>
+                  <Button variant="primary" className="flex-1 h-12 uppercase tracking-widest text-[10px] font-black shadow-xl" onClick={submitReschedule}>
+                    Relocate Item
+                  </Button>
+                </div>
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
+
+      {/* Edit Modal */}
+      <AnimatePresence>
+        {isEditModalOpen && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+            <motion.div 
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              onClick={() => setIsEditModalOpen(false)}
+              className="absolute inset-0 bg-stone-900/60 backdrop-blur-sm"
+            />
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95, y: 20 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.95, y: 20 }}
+              className="relative w-full max-w-md bg-white rounded-[2rem] shadow-2xl overflow-hidden"
+            >
+              <div className="p-6 border-b border-stone-100 flex items-center justify-between">
+                <div>
+                  <h3 className="text-base font-black text-text-main uppercase tracking-tight">Edit Action Details</h3>
+                  <p className="text-[10px] text-text-muted font-bold uppercase tracking-[0.2em] mt-1">Modify tracker metadata</p>
+                </div>
+                <button onClick={() => setIsEditModalOpen(false)} className="text-stone-400 hover:text-stone-900">
+                  <X size={20} />
+                </button>
+              </div>
+
+              <div className="p-6 space-y-6">
+                <div className="space-y-4">
+                  <div className="space-y-2">
+                    <label className="text-[10px] font-black uppercase tracking-widest text-text-muted ml-1">Title</label>
+                    <input 
+                      className="w-full p-4 bg-stone-50 border border-stone-200 rounded-2xl text-sm focus:ring-2 focus:ring-accent-sage/20 focus:border-accent-sage outline-none transition-all font-bold"
+                      value={editForm.title || ''}
+                      onChange={(e) => setEditForm({...editForm, title: e.target.value})}
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <label className="text-[10px] font-black uppercase tracking-widest text-text-muted ml-1">Description</label>
+                    <textarea 
+                      className="w-full min-h-[80px] p-4 bg-stone-50 border border-stone-200 rounded-2xl text-sm focus:ring-2 focus:ring-accent-sage/20 focus:border-accent-sage outline-none transition-all resize-none"
+                      value={editForm.description || ''}
+                      onChange={(e) => setEditForm({...editForm, description: e.target.value})}
+                    />
+                  </div>
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                      <label className="text-[10px] font-black uppercase tracking-widest text-text-muted ml-1">Time</label>
+                      <input 
+                        className="w-full p-4 bg-stone-50 border border-stone-200 rounded-2xl text-sm focus:ring-2 focus:ring-accent-sage/20 focus:border-accent-sage outline-none transition-all"
+                        value={editForm.time || ''}
+                        onChange={(e) => setEditForm({...editForm, time: e.target.value})}
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <label className="text-[10px] font-black uppercase tracking-widest text-text-muted ml-1">Amount (if applicable)</label>
+                      <input 
+                        type="number"
+                        className="w-full p-4 bg-stone-50 border border-stone-200 rounded-2xl text-sm focus:ring-2 focus:ring-accent-sage/20 focus:border-accent-sage outline-none transition-all"
+                        value={editForm.amount || ''}
+                        onChange={(e) => setEditForm({...editForm, amount: Number(e.target.value)})}
+                      />
+                    </div>
+                  </div>
+                </div>
+
+                <div className="flex gap-4">
+                  <Button variant="outline" className="flex-1 h-12 uppercase tracking-widest text-[10px] font-black" onClick={() => setIsEditModalOpen(false)}>
+                    Cancel
+                  </Button>
+                  <Button variant="primary" className="flex-1 h-12 uppercase tracking-widest text-[10px] font-black shadow-xl" onClick={submitEdit}>
+                    Save Changes
                   </Button>
                 </div>
               </div>

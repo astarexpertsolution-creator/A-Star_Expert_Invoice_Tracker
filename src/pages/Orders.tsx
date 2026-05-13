@@ -6,7 +6,7 @@ import { collection, onSnapshot, query, orderBy } from 'firebase/firestore';
 import { db } from '../lib/firebase';
 import { handleFirestoreError, OperationType } from '../lib/firestoreUtils';
 
-export const Orders: React.FC = () => {
+export const Orders: React.FC<{ onInvoiceCreate?: (po: PurchaseOrder) => void }> = ({ onInvoiceCreate }) => {
   const [purchaseOrders, setPurchaseOrders] = useState<PurchaseOrder[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -87,7 +87,12 @@ export const Orders: React.FC = () => {
                     View
                   </Button>
                   {po.status === 'Pending' && (
-                    <Button variant="primary" size="sm" className="h-10 px-4 text-[10px] font-black uppercase tracking-widest gap-2">
+                    <Button 
+                      variant="primary" 
+                      size="sm" 
+                      className="h-10 px-4 text-[10px] font-black uppercase tracking-widest gap-2"
+                      onClick={() => onInvoiceCreate?.(po)}
+                    >
                       <FileText size={14} /> Create Invoice <ArrowRight size={14} />
                     </Button>
                   )}

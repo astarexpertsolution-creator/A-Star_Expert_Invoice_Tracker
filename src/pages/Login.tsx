@@ -2,18 +2,27 @@ import React, { useState } from 'react';
 import { Card, Button } from '../components/UI';
 import { ChevronRight } from 'lucide-react';
 import { motion } from 'motion/react';
-import { signInWithPopup, GoogleAuthProvider } from 'firebase/auth';
+import { signInAnonymously, GoogleAuthProvider, signInWithPopup } from 'firebase/auth';
 import { auth } from '../lib/firebase';
 
 export const Login: React.FC<{ onLogin: () => void }> = ({ onLogin }) => {
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
-  const handleBypassLogin = () => {
+  const handleBypassLogin = async () => {
     setLoading(true);
-    setTimeout(() => {
+    setError(null);
+    try {
+      await signInAnonymously(auth);
       onLogin();
+    } catch (err: any) {
+      console.error('Bypass login failed:', err);
+      // Fallback: still call onLogin to allow UI traversal, 
+      // but warn that DB operations might fail if rules are strict.
+      onLogin();
+    } finally {
       setLoading(false);
-    }, 800);
+    }
   };
 
   return (

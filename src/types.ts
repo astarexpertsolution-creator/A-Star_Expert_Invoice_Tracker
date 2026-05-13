@@ -12,17 +12,35 @@ export enum ProductStatus {
 }
 
 export enum CRMStatus {
+  DRAFT = 'Draft',
+  NEW_LEAD = 'New Lead Created',
   YET_TO_MEET = 'Yet to meet',
   APPOINTMENT_SCHEDULED = 'Appointment scheduled',
+  MEETING_COMPLETED = 'Meeting completed',
   ENQUIRY_RECEIVED = 'Received Enquiry',
   QUOTATION_SHARED = 'Shared Quotation',
+  NEGOTIATION = 'Negotiation',
+  ON_HOLD = 'On Hold',
+  PO_RECEIVED = 'PO Received',
   CONVERTED = 'Converted',
+  LOST = 'Lost',
+  RESCHEDULED = 'Rescheduled',
+}
+
+export enum LeadType {
+  DIRECT_WALKIN = 'Direct Walk-In',
+  REFERRAL = 'Referral',
+  FRIEND = 'Friend',
+  INTERNET = 'sourced from Internet',
+  OLD_LEAD = 'old lead',
 }
 
 export enum DispatchStatus {
   PENDING = 'Pending',
   DISPATCHED = 'Dispatched',
   DELIVERED = 'Delivered',
+  LOST = 'Lost/Issue',
+  REDIRECTED = 'Redirected',
 }
 
 export interface Supplier {
@@ -54,15 +72,41 @@ export interface Product {
 export interface Lead {
   id: string;
   companyName: string;
-  contactPerson: string;
-  email: string;
-  phone: string;
-  requirements: string;
+  contactPerson?: string; // Lead Name (Optional)
+  designation?: string; // Designation of Person (Optional)
+  leadSource?: string; // Lead Source (Optional)
+  leadType?: LeadType; // Lead Type (Optional)
+  referredBy?: string; // Conditional field
+  email?: string;
+  phone?: string;
+  requirements?: string;
   status: CRMStatus;
-  notes: string;
+  notes?: string;
+  meetingNotes?: string;
   assignedTo?: string;
-  appointmentDate?: string;
+  appointmentDate?: string; // Appointment Date & Time
+  appointmentTime?: string;
+  quotationVersions?: QuotationVersion[];
+  enquiryVersions?: EnquiryVersion[];
   createdAt: string;
+  updatedAt?: string;
+}
+
+export interface EnquiryVersion {
+  id: string;
+  version: number;
+  details: string;
+  date: string;
+}
+
+export interface QuotationVersion {
+  id: string;
+  version: number;
+  items: InvoiceItem[];
+  totalAmount: number;
+  date: string;
+  notes?: string;
+  status: 'Draft' | 'Sent' | 'Approved' | 'Rejected';
 }
 
 export interface Customer {
@@ -111,14 +155,19 @@ export interface Invoice {
   customerName: string;
   billingAddress: string;
   poId?: string;
+  poNumber?: string;
   items: InvoiceItem[];
   subtotal: number;
   taxTotal: number;
   grandTotal: number;
+  advanceAmount: number;
   paidAmount: number;
   status: PaymentStatus;
   dispatchStatus?: DispatchStatus;
   trackingNumber?: string;
+  courierPartner?: string;
+  deliveryProofUrl?: string;
+  logisticsNotes?: string;
   notes?: string;
   createdAt: string;
 }

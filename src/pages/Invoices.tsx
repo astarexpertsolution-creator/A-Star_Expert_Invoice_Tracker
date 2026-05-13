@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { Card, Button, Input, Select, Badge } from '../components/UI';
 import { Invoice, PaymentStatus } from '../types';
-import { Search, Plus, Filter, Eye, Edit2, Trash2, CreditCard } from 'lucide-react';
+import { Search, Plus, Filter, Eye, Edit2, Trash2, CreditCard, Truck } from 'lucide-react';
 
 interface InvoicesPageProps {
   invoices: Invoice[];
@@ -10,9 +10,10 @@ interface InvoicesPageProps {
   onEdit: (invoice: Invoice) => void;
   onDelete: (id: string) => void;
   onUpdatePayment: (invoice: Invoice) => void;
+  onUpdateLogistics: (invoice: Invoice) => void;
 }
 
-export const InvoicesPage: React.FC<InvoicesPageProps> = ({ invoices, onCreate, onView, onEdit, onDelete, onUpdatePayment }) => {
+export const InvoicesPage: React.FC<InvoicesPageProps> = ({ invoices, onCreate, onView, onEdit, onDelete, onUpdatePayment, onUpdateLogistics }) => {
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState<'All' | PaymentStatus>('All');
 
@@ -75,9 +76,8 @@ export const InvoicesPage: React.FC<InvoicesPageProps> = ({ invoices, onCreate, 
               <tr className="border-b border-border-base">
                 <th className="pb-4 font-semibold text-text-muted text-sm uppercase tracking-wider">Invoice #</th>
                 <th className="pb-4 font-semibold text-text-muted text-sm uppercase tracking-wider">Customer</th>
-                <th className="pb-4 font-semibold text-text-muted text-sm uppercase tracking-wider">Invoice Date</th>
-                <th className="pb-4 font-semibold text-text-muted text-sm uppercase tracking-wider">Due Date</th>
-                <th className="pb-4 font-semibold text-text-muted text-sm uppercase tracking-wider">Grand Total</th>
+                <th className="pb-4 font-semibold text-text-muted text-sm uppercase tracking-wider">Amount</th>
+                <th className="pb-4 font-semibold text-text-muted text-sm uppercase tracking-wider">Logistics</th>
                 <th className="pb-4 font-semibold text-text-muted text-sm uppercase tracking-wider text-center">Status</th>
                 <th className="pb-4 font-semibold text-text-muted text-sm uppercase tracking-wider text-right">Actions</th>
               </tr>
@@ -87,11 +87,22 @@ export const InvoicesPage: React.FC<InvoicesPageProps> = ({ invoices, onCreate, 
                 <tr key={inv.id} className="hover:bg-bg-main transition-colors group">
                   <td className="py-4 font-medium text-text-main">{inv.invoiceNumber}</td>
                   <td className="py-4 text-text-main font-bold">{inv.customerName}</td>
-                  <td className="py-4 text-text-muted text-sm">{inv.invoiceDate}</td>
-                  <td className="py-4 text-text-muted text-sm">{inv.dueDate}</td>
                   <td className="py-4">
                     <div className="font-semibold text-text-main">₹{inv.grandTotal.toLocaleString()}</div>
-                    <div className="text-[10px] text-text-muted">Balance: ₹{(inv.grandTotal - inv.paidAmount).toLocaleString()}</div>
+                    <div className="text-[10px] text-text-muted">Paid: ₹{inv.paidAmount.toLocaleString()}</div>
+                  </td>
+                  <td className="py-4">
+                    <div className="flex flex-col gap-1">
+                      <Badge color={
+                        inv.dispatchStatus === 'Delivered' ? 'green' : 
+                        inv.dispatchStatus === 'Dispatched' ? 'blue' : 'slate'
+                      } className="text-[9px] w-fit">
+                        {inv.dispatchStatus || 'Pending'}
+                      </Badge>
+                      {inv.trackingNumber && (
+                        <span className="text-[10px] font-bold text-stone-400 font-mono">{inv.trackingNumber}</span>
+                      )}
+                    </div>
                   </td>
                   <td className="py-4">
                     <Badge color={getStatusColor(inv.status)}>{inv.status}</Badge>
@@ -106,6 +117,9 @@ export const InvoicesPage: React.FC<InvoicesPageProps> = ({ invoices, onCreate, 
                       </Button>
                       <Button variant="ghost" size="icon" title="Update Payment" onClick={() => onUpdatePayment(inv)} className="h-8 w-8 text-indigo-600">
                         <CreditCard size={16} />
+                      </Button>
+                      <Button variant="ghost" size="icon" title="Update Logistics" onClick={() => onUpdateLogistics(inv)} className="h-8 w-8 text-blue-600">
+                        <Truck size={16} />
                       </Button>
                       <Button variant="ghost" size="icon" title="Delete" onClick={() => onDelete(inv.id)} className="h-8 w-8 text-red-600">
                         <Trash2 size={16} />

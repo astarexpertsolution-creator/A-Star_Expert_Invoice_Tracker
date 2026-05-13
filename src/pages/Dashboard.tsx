@@ -1,14 +1,22 @@
 import React from 'react';
 import { Card } from '../components/UI';
 import { DollarSign, FileText, CheckCircle, Clock, AlertCircle, ShoppingCart } from 'lucide-react';
-import { PaymentStatus, Invoice } from '../types';
+import { PaymentStatus, Invoice, Lead, CRMStatus } from '../types';
 import { SAMPLE_INVOICES } from '../constants';
 import { Badge } from '../components/UI';
 
-export const Dashboard: React.FC<{ invoices: Invoice[] }> = ({ invoices }) => {
+export const Dashboard: React.FC<{ invoices: Invoice[], leads: Lead[] }> = ({ invoices, leads }) => {
   const totalAmount = invoices.reduce((acc, inv) => acc + inv.grandTotal, 0);
   const totalPaid = invoices.reduce((acc, inv) => acc + inv.paidAmount, 0);
   const pendingAmount = totalAmount - totalPaid;
+
+  const pipeline = [
+    { label: 'Leads', count: leads.filter(l => l.status === CRMStatus.YET_TO_MEET).length, color: 'bg-stone-100' },
+    { label: 'Meetings', count: leads.filter(l => l.status === CRMStatus.MEETING_COMPLETED).length, color: 'bg-blue-50' },
+    { label: 'Enquiries', count: leads.filter(l => l.status === CRMStatus.ENQUIRY_RECEIVED).length, color: 'bg-orange-50' },
+    { label: 'Quotes', count: leads.filter(l => l.status === CRMStatus.QUOTATION_SHARED).length, color: 'bg-indigo-50' },
+    { label: 'POs', count: leads.filter(l => l.status === CRMStatus.PO_RECEIVED).length, color: 'bg-emerald-50' },
+  ];
 
   const stats = [
     { label: 'Total', value: invoices.length, color: 'text-text-main', border: 'border-border-base' },
@@ -60,6 +68,26 @@ export const Dashboard: React.FC<{ invoices: Invoice[] }> = ({ invoices }) => {
               <p className="text-[10px] uppercase font-bold text-white/60">Supplier Fulfillment Pending</p>
             </div>
           </div>
+        </div>
+      </div>
+
+      <div className="bg-white rounded-[2rem] border border-stone-200 p-8 shadow-sm">
+        <div className="flex items-center justify-between mb-8">
+           <h3 className="text-sm font-black uppercase tracking-widest text-stone-400">Sales Pipeline Efficiency</h3>
+           <div className="flex items-center gap-4">
+             <div className="flex items-center gap-2">
+               <div className="w-2 h-2 rounded-full bg-emerald-500"></div>
+               <span className="text-[10px] font-bold text-stone-400 uppercase">Active Fulfillment</span>
+             </div>
+           </div>
+        </div>
+        <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
+          {pipeline.map((p, idx) => (
+            <div key={idx} className={`${p.color} p-6 rounded-2xl border border-stone-100/50 flex flex-col items-center justify-center gap-2 transition-transform hover:scale-105 cursor-default`}>
+              <span className="text-3xl font-black text-stone-900">{p.count}</span>
+              <span className="text-[9px] font-black uppercase tracking-widest text-stone-400">{p.label}</span>
+            </div>
+          ))}
         </div>
       </div>
 

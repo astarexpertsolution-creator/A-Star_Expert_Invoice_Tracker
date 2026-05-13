@@ -13,10 +13,13 @@ import { InvoiceCreation } from './pages/InvoiceCreation';
 import { InvoiceDetails } from './pages/InvoiceDetails';
 import { Login } from './pages/Login';
 import { SAMPLE_PRODUCTS, SAMPLE_CUSTOMERS, SAMPLE_INVOICES } from './constants';
-import { Product, Customer, Invoice, PaymentStatus } from './types';
+import { Product, Customer, Invoice, PaymentStatus, Lead } from './types';
 import { Card, Button, Input, Select } from './components/UI';
 import { X } from 'lucide-react';
 import { AnimatePresence, motion } from 'motion/react';
+import { db } from './lib/firebase';
+import { collection, onSnapshot, query, orderBy, doc, updateDoc, setDoc, addDoc, serverTimestamp } from 'firebase/firestore';
+import { handleFirestoreError, OperationType } from './lib/firestoreUtils';
 
 export default function App() {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
@@ -39,13 +42,83 @@ export default function App() {
   
   // Data State
   const [products, setProducts] = useState<Product[]>(SAMPLE_PRODUCTS);
-  const [customers, setCustomers] = useState<Customer[]>(SAMPLE_CUSTOMERS);
-  const [invoices, setInvoices] = useState<Invoice[]>(SAMPLE_INVOICES);
+  const [customers, setCustomers] = useState<Customer[]>([]);
+  const [invoices, setInvoices] = useState<Invoice[]>([]);
+  const [leads, setLeads] = useState<Lead[]>([]);
+  const [trackerItems, setTrackerItems] = useState<any[]>([]);
+  const [loadingLeads, setLoadingLeads] = useState(true);
+  const [loadingCustomers, setLoadingCustomers] = useState(true);
+  const [loadingInvoices, setLoadingInvoices] = useState(true);
+  const [loadingTracker, setLoadingTracker] = useState(true);
+
+  useEffect(() => {
+    if (!isAuthenticated) return;
+    
+    // Sync Leads
+    const leadsRef = collection(db, 'leads');
+    const qLeads = query(leadsRef, orderBy('createdAt', 'desc'));
+    const unsubLeads = onSnapshot(qLeads, (snapshot) => {
+      setLeads(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })) as Lead[]);
+      setLoadingLeads(false);
+    }, (error) => {
+      console.error('Leads sync error:', error);
+      setLoadingLeads(false);
+    });
+
+    // Sync Customers
+    const custRef = collection(db, 'customers');
+    const qCust = query(custRef, orderBy('createdAt', 'desc'));
+    const unsubCust = onSnapshot(qCust, (snapshot) => {
+      setCustomers(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })) as Customer[]);
+      setLoadingCustomers(false);
+    }, (error) => {
+      console.error('Customers sync error:', error);
+      setLoadingCustomers(false);
+    });
+
+    // Sync Invoices
+    const invRef = collection(db, 'invoices');
+    const qInv = query(invRef, orderBy('createdAt', 'desc'));
+    const unsubInv = onSnapshot(qInv, (snapshot) => {
+      setInvoices(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })) as Invoice[]);
+      setLoadingInvoices(false);
+    }, (error) => {
+      console.error('Invoices sync error:', error);
+      setLoadingInvoices(false);
+    });
+
+    // Sync Tracker
+    const trackerRef = collection(db, 'tracker');
+    const qTracker = query(trackerRef, orderBy('createdAt', 'desc'));
+    const unsubTracker = onSnapshot(qTracker, (snapshot) => {
+      setTrackerItems(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })));
+      setLoadingTracker(false);
+    }, (error) => {
+      console.error('Tracker sync error:', error);
+      setLoadingTracker(false);
+    });
+
+    return () => {
+      unsubLeads();
+      unsubCust();
+      unsubInv();
+      unsubTracker();
+    };
+  }, [isAuthenticated]);
   
   // Sub-navigation state
   const [viewingInvoice, setViewingInvoice] = useState<Invoice | null>(null);
   const [isCreatingInvoice, setIsCreatingInvoice] = useState(false);
   const [payingInvoice, setPayingInvoice] = useState<Invoice | null>(null);
+  const [updatingLogistics, setUpdatingLogistics] = useState<Invoice | null>(null);
+
+  // Logistics Form State
+  const [logisticsData, setLogisticsData] = useState({
+    trackingNumber: '',
+    courierPartner: '',
+    deliveryProofUrl: '',
+    logisticsNotes: ''
+  });
 
   // Payment Form State
   const [paymentAmount, setPaymentAmount] = useState(0);
@@ -56,43 +129,60 @@ export default function App() {
     return <Login onLogin={() => setIsAuthenticated(true)} />;
   }
 
-  const handleCreateInvoice = (newInvoiceData: Omit<Invoice, 'id' | 'createdAt'>) => {
-    const newInvoice: Invoice = {
-      ...newInvoiceData,
-      id: `inv-${Date.now()}`,
-      createdAt: new Date().toISOString(),
-    };
-    setInvoices([newInvoice, ...invoices]);
-    setIsCreatingInvoice(false);
-    setActiveTab('invoices');
+  const handleCreateInvoice = async (newInvoiceData: Omit<Invoice, 'id' | 'createdAt'>) => {
+    try {
+      const invRef = collection(db, 'invoices');
+      await addDoc(invRef, {
+        ...newInvoiceData,
+        createdAt: new Date().toISOString(), // Keeping string for model consistency or matching serverTimestamp()
+        serverCreatedAt: serverTimestamp()
+      });
+      setIsCreatingInvoice(false);
+      setActiveTab('invoices');
+    } catch (e) {
+      handleFirestoreError(e, OperationType.CREATE, 'invoices');
+    }
   };
 
-  const handleUpdatePayment = () => {
+  const handleUpdatePayment = async () => {
     if (!payingInvoice) return;
-
-    const updatedInvoices = invoices.map(inv => {
-      if (inv.id === payingInvoice.id) {
-        const newPaidAmount = inv.paidAmount + paymentAmount;
-        let newStatus = inv.status;
-        
-        if (newPaidAmount >= inv.grandTotal) {
-          newStatus = PaymentStatus.PAID;
-        } else if (newPaidAmount > 0) {
-          newStatus = PaymentStatus.PARTIALLY_PAID;
-        }
-
-        return {
-          ...inv,
-          paidAmount: newPaidAmount,
-          status: newStatus,
-        };
+    try {
+      const newPaidAmount = payingInvoice.paidAmount + paymentAmount;
+      let newStatus = payingInvoice.status;
+      
+      if (newPaidAmount >= payingInvoice.grandTotal) {
+        newStatus = PaymentStatus.PAID;
+      } else if (newPaidAmount > 0) {
+        newStatus = PaymentStatus.PARTIALLY_PAID;
       }
-      return inv;
-    });
 
-    setInvoices(updatedInvoices);
-    setPayingInvoice(null);
-    setPaymentAmount(0);
+      await updateDoc(doc(db, 'invoices', payingInvoice.id), {
+        paidAmount: newPaidAmount,
+        status: newStatus,
+        updatedAt: serverTimestamp()
+      });
+
+      setPayingInvoice(null);
+      setPaymentAmount(0);
+    } catch (e) {
+      handleFirestoreError(e, OperationType.UPDATE, 'invoices');
+    }
+  };
+
+  const handleUpdateLogistics = async () => {
+    if (!updatingLogistics) return;
+    try {
+      await updateDoc(doc(db, 'invoices', updatingLogistics.id), {
+        ...logisticsData,
+        dispatchStatus: logisticsData.deliveryProofUrl ? 'Delivered' : 'Dispatched' as any,
+        updatedAt: serverTimestamp()
+      });
+
+      setUpdatingLogistics(null);
+      setLogisticsData({ trackingNumber: '', courierPartner: '', logisticsNotes: '', deliveryProofUrl: '' });
+    } catch (e) {
+      handleFirestoreError(e, OperationType.UPDATE, 'invoices');
+    }
   };
 
   const renderContent = () => {
@@ -113,7 +203,7 @@ export default function App() {
 
     switch (activeTab) {
       case 'dashboard':
-        return <Dashboard invoices={invoices} />;
+        return <Dashboard invoices={invoices} leads={leads} />;
       case 'products':
         return (
           <ProductsPage 
@@ -124,16 +214,23 @@ export default function App() {
           />
         );
       case 'leads':
-        return <LeadsPage />;
+        return <LeadsPage externalLeads={leads} loadingLeads={loadingLeads} />;
       case 'appointments':
-        return <AppointmentsPage />;
+        return <AppointmentsPage externalItems={trackerItems} />;
       case 'customers':
         return (
           <CustomersPage 
             customers={customers} 
-            onAdd={(c) => setCustomers([...customers, { ...c, id: `c-${Date.now()}` }])}
-            onEdit={(c) => setCustomers(customers.map(item => item.id === c.id ? c : item))}
-            onDelete={(id) => setCustomers(customers.filter(c => c.id !== id))}
+            onAdd={(c) => {
+              const custRef = collection(db, 'customers');
+              addDoc(custRef, { ...c, createdAt: serverTimestamp() });
+            }}
+            onEdit={(c) => {
+              updateDoc(doc(db, 'customers', c.id), { ...c, updatedAt: serverTimestamp() });
+            }}
+            onDelete={(id) => {
+              // Delete logic
+            }}
           />
         );
       case 'invoices':
@@ -143,15 +240,31 @@ export default function App() {
             onCreate={() => setIsCreatingInvoice(true)}
             onView={(inv) => setViewingInvoice(inv)}
             onEdit={() => {}} // Placeholder
-            onDelete={(id) => setInvoices(invoices.filter(i => i.id !== id))}
+            onDelete={(id) => {}} // Delete logic
             onUpdatePayment={(inv) => {
               setPayingInvoice(inv);
               setPaymentAmount(inv.grandTotal - inv.paidAmount);
             }}
+            onUpdateLogistics={(inv) => {
+              setUpdatingLogistics(inv);
+              setLogisticsData({
+                trackingNumber: inv.trackingNumber || '',
+                courierPartner: inv.courierPartner || '',
+                logisticsNotes: inv.logisticsNotes || '',
+                deliveryProofUrl: inv.deliveryProofUrl || ''
+              });
+            }}
           />
         );
       case 'orders':
-        return <Orders />;
+        return (
+          <Orders 
+            onInvoiceCreate={(po) => {
+              setIsCreatingInvoice(true);
+              // In a more complex app, we'd pass PO data to pre-fill the form
+            }} 
+          />
+        );
       case 'suppliers':
         return <Suppliers />;
       case 'payments':
@@ -256,6 +369,71 @@ export default function App() {
                   <div className="flex gap-3 pt-2">
                     <Button variant="outline" className="flex-1" onClick={() => setPayingInvoice(null)}>Cancel</Button>
                     <Button className="flex-1" onClick={handleUpdatePayment}>Confirm Payment</Button>
+                  </div>
+                </div>
+              </Card>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
+      {/* Logistics Modal */}
+      <AnimatePresence>
+        {updatingLogistics && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+            <motion.div 
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className="absolute inset-0 bg-sidebar-bg/60 backdrop-blur-sm"
+              onClick={() => setUpdatingLogistics(null)}
+            />
+            <motion.div 
+              initial={{ opacity: 0, scale: 0.95, y: 20 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.95, y: 20 }}
+              className="relative w-full max-w-md"
+            >
+              <Card title="Dispatch Protocol" subtitle={`Logistic Tracking for ${updatingLogistics.invoiceNumber}`}>
+                <div className="absolute top-4 right-4">
+                  <button onClick={() => setUpdatingLogistics(null)} className="p-1 rounded-full hover:bg-bg-main text-text-muted">
+                    <X size={20} />
+                  </button>
+                </div>
+                
+                <div className="space-y-6">
+                  <div className="space-y-4">
+                    <Input 
+                      label="Courier Partner" 
+                      placeholder="e.g. BlueDart, Delhivery"
+                      value={logisticsData.courierPartner} 
+                      onChange={(e) => setLogisticsData({...logisticsData, courierPartner: e.target.value})} 
+                    />
+                    <Input 
+                      label="Tracking ID" 
+                      placeholder="Enter AWN / Tracking Number"
+                      value={logisticsData.trackingNumber} 
+                      onChange={(e) => setLogisticsData({...logisticsData, trackingNumber: e.target.value})} 
+                    />
+                    <Input 
+                      label="Delivery Proof (URL/Link)" 
+                      placeholder="Enter link to delivery confirmation"
+                      value={logisticsData.deliveryProofUrl} 
+                      onChange={(e) => setLogisticsData({...logisticsData, deliveryProofUrl: e.target.value})} 
+                    />
+                    <div className="space-y-2">
+                       <label className="text-xs font-semibold text-text-muted ml-1">Logistics Notes</label>
+                       <textarea 
+                         className="w-full min-h-[80px] p-4 bg-stone-50 border border-stone-200 rounded-2xl text-sm focus:ring-2 focus:ring-accent-sage/20 focus:border-accent-sage outline-none transition-all resize-none font-medium"
+                         placeholder="Any special handling instructions..."
+                         value={logisticsData.logisticsNotes}
+                         onChange={(e) => setLogisticsData({...logisticsData, logisticsNotes: e.target.value})}
+                       />
+                    </div>
+                  </div>
+
+                  <div className="flex gap-3 pt-2">
+                    <Button variant="outline" className="flex-1 h-12 uppercase tracking-widest text-[10px] font-black" onClick={() => setUpdatingLogistics(null)}>Cancel</Button>
+                    <Button className="flex-1 h-12 bg-indigo-600 hover:bg-indigo-700 uppercase tracking-widest text-[10px] font-black" onClick={handleUpdateLogistics}>Update Dispatch</Button>
                   </div>
                 </div>
               </Card>

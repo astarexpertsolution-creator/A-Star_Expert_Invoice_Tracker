@@ -41,16 +41,21 @@
       "properties": {
         "companyName": { "type": "string" },
         "contactPerson": { "type": "string" },
+        "designation": { "type": "string" },
+        "leadSource": { "type": "string" },
+        "leadType": { "type": "string" },
+        "referredBy": { "type": "string" },
         "email": { "type": "string" },
         "phone": { "type": "string" },
         "requirements": { "type": "string" },
-        "status": { "type": "string", "enum": ["Lead", "Appointment", "Onboarded"] },
+        "status": { "type": "string" },
         "notes": { "type": "string" },
-        "assignedTo": { "type": "string" },
         "appointmentDate": { "type": "string" },
-        "createdAt": { "type": "string" }
+        "appointmentTime": { "type": "string" },
+        "createdAt": { "type": "string" },
+        "updatedAt": { "type": "string" }
       },
-      "required": ["companyName", "contactPerson", "status", "createdAt"]
+      "required": ["companyName", "status", "createdAt"]
     },
     "Customer": {
       "title": "Customer",

@@ -1,30 +1,53 @@
 import React, { useState, useEffect } from 'react';
-import { Card, Button, Input, Badge, Select } from '../components/UI';
-import { Search, UserPlus, FileText, ChevronRight, Loader2, X, MoreVertical, CheckCircle2 } from 'lucide-react';
-import { Lead, CRMStatus } from '../types';
+import { Button, Input, Badge, Select } from '../components/UI';
+import { Search, UserPlus, ChevronRight, Loader2, X, MoreVertical, CheckCircle2, FileText } from 'lucide-react';
+import { Lead, CRMStatus, LeadType } from '../types';
 import { motion } from 'motion/react';
 import { db } from '../lib/firebase';
 import { collection, onSnapshot, query, orderBy, addDoc, serverTimestamp, updateDoc, doc } from 'firebase/firestore';
 import { handleFirestoreError, OperationType } from '../lib/firestoreUtils';
 import { format } from 'date-fns';
 
-export const LeadsPage: React.FC = () => {
-  const [leads, setLeads] = useState<Lead[]>([]);
-  const [loading, setLoading] = useState(true);
+export const LeadsPage: React.FC<{ externalLeads: Lead[], loadingLeads: boolean }> = ({ externalLeads, loadingLeads }) => {
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState<CRMStatus | 'All'>('All');
-  const [viewMode, setViewMode] = useState<'list' | 'create' | 'convert'>('list');
-  const [selectedLead, setSelectedLead] = useState<Lead | null>(null);
+  const [viewMode, setViewMode] = useState<'list' | 'create' | 'convert' | 'manage'>('list');
+  const [selectedLeadId, setSelectedLeadId] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   
+  const selectedLead = externalLeads.find(l => l.id === selectedLeadId) || null;
+
+  const formatDate = (date: any) => {
+    if (!date) return 'N/A';
+    try {
+      if (typeof date === 'object' && date.toDate) return format(date.toDate(), 'dd MMM yyyy');
+      return format(new Date(date), 'dd MMM yyyy');
+    } catch (e) {
+      return 'Invalid Date';
+    }
+  };
+
+  const [activeVersionTab, setActiveVersionTab] = useState<'enquiry' | 'quote' | 'meeting'>('enquiry');
+  const [newEnquiry, setNewEnquiry] = useState('');
+  const [newMeetingNotes, setNewMeetingNotes] = useState('');
+  const [apptDate, setApptDate] = useState('');
+  
+  // Quotation Builder State
+  const [quoteItems, setQuoteItems] = useState<{ productId: string, quantity: number }[]>([]);
+
   // Form State
   const [formData, setFormData] = useState({
     companyName: '',
     contactPerson: '',
+    designation: '',
+    leadSource: '',
+    leadType: '' as LeadType | '',
+    referredBy: '',
     email: '',
     phone: '',
     requirements: '',
-    notes: ''
+    appointmentDate: '',
+    appointmentTime: ''
   });
 
   // Conversion State
@@ -35,50 +58,92 @@ export const LeadsPage: React.FC = () => {
   });
 
   useEffect(() => {
-    const leadsRef = collection(db, 'leads');
-    const q = query(leadsRef, orderBy('createdAt', 'desc'));
+    // Maintain view mode if data changes
+    if (viewMode === 'manage' && selectedLeadId) {
+      const updated = externalLeads.find(l => l.id === selectedLeadId);
+      if (!updated) {
+        setViewMode('list');
+        setSelectedLeadId(null);
+      }
+    }
+  }, [externalLeads, selectedLeadId, viewMode]);
 
-    const unsubscribe = onSnapshot(q, (snapshot) => {
-      const leadsData = snapshot.docs.map(doc => ({
-        id: doc.id,
-        ...doc.data()
-      })) as Lead[];
-      setLeads(leadsData);
-      setLoading(false);
-    }, (error) => {
-      handleFirestoreError(error, OperationType.LIST, 'leads');
-      setLoading(false);
-    });
+  const scheduleAppointment = async () => {
+    if (!selectedLead || !apptDate) return;
+    try {
+      await updateDoc(doc(db, 'leads', selectedLead.id), {
+        status: CRMStatus.APPOINTMENT_SCHEDULED,
+        appointmentDate: apptDate,
+        updatedAt: serverTimestamp()
+      });
+      // Also add to tracker for Appointments screen
+      await addDoc(collection(db, 'tracker'), {
+        type: 'appointment',
+        title: `Meeting: ${selectedLead.companyName}`,
+        description: `Discovery session with ${selectedLead.contactPerson}`,
+        date: apptDate,
+        status: 'pending',
+        leadId: selectedLead.id,
+        createdAt: serverTimestamp()
+      });
+      setApptDate('');
+    } catch (e) {
+      handleFirestoreError(e, OperationType.UPDATE, 'leads');
+    }
+  };
 
-    return () => unsubscribe();
-  }, []);
+  const completeMeeting = async () => {
+    if (!selectedLead || !newMeetingNotes) return;
+    try {
+      await updateDoc(doc(db, 'leads', selectedLead.id), {
+        status: CRMStatus.MEETING_COMPLETED,
+        meetingNotes: newMeetingNotes,
+        updatedAt: serverTimestamp()
+      });
+      setNewMeetingNotes('');
+    } catch (e) {
+      handleFirestoreError(e, OperationType.UPDATE, 'leads');
+    }
+  };
 
-  const handleCreateLead = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const [submissionError, setSubmissionError] = useState<string | null>(null);
+
+  const handleCreateLead = async (e: React.FormEvent | React.MouseEvent, isDraft: boolean = false) => {
+    if (e) e.preventDefault();
     setIsSubmitting(true);
+    setSubmissionError(null);
 
-    const newLead: Omit<Lead, 'id'> = {
+    const newLead = {
       ...formData,
-      status: CRMStatus.YET_TO_MEET,
-      createdAt: new Date().toISOString()
+      status: isDraft ? CRMStatus.DRAFT : CRMStatus.NEW_LEAD,
+      createdAt: serverTimestamp(),
+      updatedAt: serverTimestamp()
     };
 
     try {
-      await addDoc(collection(db, 'leads'), {
-        ...newLead,
-        createdAt: serverTimestamp()
-      });
+      console.log('Initiating lead creation sequence:', newLead);
+      const docRef = await addDoc(collection(db, 'leads'), newLead);
+      console.log('Lead created successfully with ID:', docRef.id);
+      
       setViewMode('list');
+      setSelectedLeadId(null);
       setFormData({
         companyName: '',
         contactPerson: '',
+        designation: '',
+        leadSource: '',
+        leadType: '' as LeadType | '',
+        referredBy: '',
         email: '',
         phone: '',
         requirements: '',
-        notes: ''
+        appointmentDate: '',
+        appointmentTime: ''
       });
-    } catch (error) {
-      handleFirestoreError(error, OperationType.CREATE, 'leads');
+    } catch (error: any) {
+      console.error('Failed to create lead:', error);
+      setSubmissionError(error.message || 'Failed to create lead. Please check your connection.');
+      // Do not re-throw here so we can handle it in UI
     } finally {
       setIsSubmitting(false);
     }
@@ -190,7 +255,7 @@ export const LeadsPage: React.FC = () => {
       });
 
       setViewMode('list');
-      setSelectedLead(null);
+      setSelectedLeadId(null);
       setConversionData({ taxNumber: '', billingAddress: '', poNumber: '' });
       
     } catch (error) {
@@ -201,6 +266,7 @@ export const LeadsPage: React.FC = () => {
   };
 
   const statusFlow = [
+    CRMStatus.NEW_LEAD,
     CRMStatus.YET_TO_MEET,
     CRMStatus.APPOINTMENT_SCHEDULED,
     CRMStatus.ENQUIRY_RECEIVED,
@@ -215,14 +281,14 @@ export const LeadsPage: React.FC = () => {
     return null;
   };
 
-  const filteredLeads = leads.filter(l => {
+  const filteredLeads = externalLeads.filter(l => {
     const matchesSearch = l.companyName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         l.contactPerson.toLowerCase().includes(searchTerm.toLowerCase());
+                         (l.contactPerson?.toLowerCase() || '').includes(searchTerm.toLowerCase());
     const matchesStatus = statusFilter === 'All' || l.status === statusFilter;
     return matchesSearch && matchesStatus;
   });
 
-  if (loading) {
+  if (loadingLeads) {
     return (
       <div className="h-64 flex flex-col items-center justify-center gap-4">
         <Loader2 className="w-8 h-8 text-accent-sage animate-spin" />
@@ -248,35 +314,93 @@ export const LeadsPage: React.FC = () => {
           </Button>
         </div>
 
-        <Card>
-          <form onSubmit={handleCreateLead} className="p-8 space-y-8">
+        <div className="bg-white rounded-3xl border border-stone-200 shadow-sm overflow-hidden">
+          <form 
+            id="create-lead-form"
+            onSubmit={(e) => handleCreateLead(e)} 
+            className="p-8 space-y-8"
+          >
+            {submissionError && (
+              <div className="p-4 bg-red-50 border border-red-100 rounded-2xl text-xs font-bold text-red-600 uppercase tracking-wider animate-pulse">
+                Error Trace: {submissionError}
+              </div>
+            )}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
               <Input 
-                label="Company Name" 
+                label="Company *" 
                 placeholder="e.g. KMCH Hospital" 
                 required 
                 value={formData.companyName}
                 onChange={(e) => setFormData({...formData, companyName: e.target.value})}
               />
               <Input 
-                label="Contact Person" 
+                label="Lead Name (Optional)" 
                 placeholder="e.g. Dr. John Doe" 
-                required 
                 value={formData.contactPerson}
                 onChange={(e) => setFormData({...formData, contactPerson: e.target.value})}
               />
               <Input 
-                label="Email Address" 
+                label="Designation of Person (Optional)" 
+                placeholder="e.g. Medical Director" 
+                value={formData.designation}
+                onChange={(e) => setFormData({...formData, designation: e.target.value})}
+              />
+              <Input 
+                label="Lead Source (Optional)" 
+                placeholder="e.g. Medical Fair 2024" 
+                value={formData.leadSource}
+                onChange={(e) => setFormData({...formData, leadSource: e.target.value})}
+              />
+              
+              <div className="space-y-2">
+                <label className="text-[10px] font-black uppercase tracking-widest text-text-muted ml-1">Lead Type</label>
+                <Select 
+                  value={formData.leadType}
+                  onChange={(e) => setFormData({...formData, leadType: e.target.value as LeadType})}
+                  className="h-12"
+                >
+                  <option value="">Select Type</option>
+                  {Object.values(LeadType).map(type => (
+                    <option key={type} value={type}>{type}</option>
+                  ))}
+                </Select>
+              </div>
+
+              {formData.leadType === LeadType.REFERRAL && (
+                <Input 
+                  label="Referred by *" 
+                  placeholder="e.g. Dr. Rajesh" 
+                  required
+                  value={formData.referredBy}
+                  onChange={(e) => setFormData({...formData, referredBy: e.target.value})}
+                />
+              )}
+
+              <div className="grid grid-cols-2 gap-4">
+                <Input 
+                  label="Appointment Date (Optional)" 
+                  type="date"
+                  value={formData.appointmentDate}
+                  onChange={(e) => setFormData({...formData, appointmentDate: e.target.value})}
+                />
+                <Input 
+                  label="Time (Optional)" 
+                  type="time"
+                  value={formData.appointmentTime}
+                  onChange={(e) => setFormData({...formData, appointmentTime: e.target.value})}
+                />
+              </div>
+
+              <Input 
+                label="Email (Optional)" 
                 type="email" 
                 placeholder="john@example.com" 
-                required 
                 value={formData.email}
                 onChange={(e) => setFormData({...formData, email: e.target.value})}
               />
               <Input 
-                label="Phone Number" 
+                label="Phone (Optional)" 
                 placeholder="+91 000 000 0000" 
-                required 
                 value={formData.phone}
                 onChange={(e) => setFormData({...formData, phone: e.target.value})}
               />
@@ -286,44 +410,332 @@ export const LeadsPage: React.FC = () => {
               <div className="space-y-2">
                 <label className="text-[10px] font-black uppercase tracking-widest text-text-muted ml-1">Requirement Specification</label>
                 <textarea 
-                  className="w-full min-h-[150px] p-6 bg-stone-50 border border-stone-200 rounded-2xl text-sm focus:ring-2 focus:ring-accent-sage/20 focus:border-accent-sage outline-none transition-all resize-none font-medium"
+                  className="w-full min-h-[120px] p-6 bg-stone-50 border border-stone-200 rounded-2xl text-sm focus:ring-2 focus:ring-accent-sage/20 focus:border-accent-sage outline-none transition-all resize-none font-medium"
                   placeholder="Detail the scientific requirements..."
-                  required
                   value={formData.requirements}
                   onChange={(e) => setFormData({...formData, requirements: e.target.value})}
                 />
               </div>
-              <div className="space-y-2">
-                <label className="text-[10px] font-black uppercase tracking-widest text-text-muted ml-1">Internal Strategic Notes</label>
-                <textarea 
-                  className="w-full min-h-[100px] p-6 bg-stone-50 border border-stone-200 rounded-2xl text-sm focus:ring-2 focus:ring-accent-sage/20 focus:border-accent-sage outline-none transition-all resize-none font-medium text-stone-500"
-                  placeholder="Add any internal context..."
-                  value={formData.notes}
-                  onChange={(e) => setFormData({...formData, notes: e.target.value})}
-                />
-              </div>
             </div>
 
-            <div className="flex gap-4 pt-6 border-t border-stone-100">
+            <div className="flex flex-col sm:flex-row gap-4 pt-6 border-t border-stone-100">
               <Button 
                 type="button" 
                 variant="outline" 
-                className="flex-1 h-14 uppercase tracking-widest text-[10px] font-black"
+                className="flex-1 h-12 uppercase tracking-widest text-[10px] font-black"
                 onClick={() => setViewMode('list')}
               >
-                Discard Draft
+                Cancel
               </Button>
               <Button 
+                id="draft-lead-button"
+                type="button"
+                variant="outline"
+                className="flex-1 h-12 uppercase tracking-widest text-[10px] font-black border-stone-200"
+                isLoading={isSubmitting}
+                onClick={(e) => handleCreateLead(e, true)}
+              >
+                Draft
+              </Button>
+              <Button 
+                id="add-lead-submit-button"
                 type="submit" 
                 variant="primary" 
-                className="flex-[2] h-14 uppercase tracking-[0.3em] text-[10px] font-black shadow-xl shadow-accent-sage/20"
+                className="flex-[2] h-12 uppercase tracking-[0.3em] text-[10px] font-black shadow-xl shadow-accent-sage/20"
                 isLoading={isSubmitting}
               >
-                Register & Initialize Protocol
+                Add Lead
               </Button>
             </div>
           </form>
-        </Card>
+        </div>
+      </motion.div>
+    );
+  }
+
+  if (viewMode === 'manage' && selectedLead) {
+    return (
+      <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="space-y-6">
+        <div className="flex items-center justify-between mb-8">
+          <div>
+            <h2 className="text-2xl font-black text-text-main uppercase tracking-tight">{selectedLead.companyName}</h2>
+            <p className="text-[10px] text-text-muted font-bold uppercase tracking-[0.2em] mt-1">Lead Lifecycle Orchestration</p>
+          </div>
+          <Button variant="outline" onClick={() => {
+            setViewMode('list');
+            setSelectedLeadId(null);
+          }} className="gap-2 text-[10px] uppercase font-black tracking-widest">
+            <X size={16} /> Close Terminal
+          </Button>
+        </div>
+
+        <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
+          {/* Status Tracker */}
+          <div className="lg:col-span-1 space-y-6">
+            <div className="bg-white rounded-3xl border border-stone-200 p-6 space-y-4 shadow-sm">
+              <h3 className="text-[10px] font-black uppercase tracking-widest text-stone-400">Current Phase</h3>
+              <div className="space-y-3">
+                {[
+                  { status: CRMStatus.NEW_LEAD, label: 'Lead Created' },
+                  { status: CRMStatus.YET_TO_MEET, label: 'Qualification' },
+                  { status: CRMStatus.APPOINTMENT_SCHEDULED, label: 'Appointment' },
+                  { status: CRMStatus.MEETING_COMPLETED, label: 'Meeting Done' },
+                  { status: CRMStatus.ENQUIRY_RECEIVED, label: 'Enquiry Received' },
+                  { status: CRMStatus.QUOTATION_SHARED, label: 'Quotation Shared' },
+                  { status: CRMStatus.PO_RECEIVED, label: 'PO Received' }
+                ].map((step, idx) => {
+                  const isCompleted = Object.values(CRMStatus).indexOf(selectedLead.status) >= Object.values(CRMStatus).indexOf(step.status);
+                  const isCurrent = selectedLead.status === step.status;
+                  return (
+                    <div key={idx} className="flex items-center gap-3">
+                      <div className={`w-5 h-5 rounded-full flex items-center justify-center text-[10px] font-bold ${
+                        isCompleted ? 'bg-emerald-500 text-white' : 'bg-stone-100 text-stone-400'
+                      }`}>
+                        {isCompleted ? '✓' : idx + 1}
+                      </div>
+                      <span className={`text-xs font-black uppercase tracking-tight ${
+                        isCurrent ? 'text-text-main' : isCompleted ? 'text-emerald-600' : 'text-stone-300'
+                      }`}>{step.label}</span>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+
+            {/* Quick Actions */}
+            <div className="bg-stone-900 rounded-3xl p-6 space-y-4 shadow-xl">
+              <h3 className="text-[10px] font-black uppercase tracking-widest text-stone-400">Protocol Actions</h3>
+              <div className="grid grid-cols-1 gap-2">
+                <Button 
+                  variant="ghost" 
+                  className="w-full justify-start text-white hover:bg-white/10 h-10 text-[10px] uppercase font-black tracking-widest"
+                  onClick={() => handleStatusUpdate(selectedLead.id, CRMStatus.ON_HOLD)}
+                >
+                  ⚠ Put on Hold
+                </Button>
+                <Button 
+                  variant="ghost" 
+                  className="w-full justify-start text-red-400 hover:bg-red-950/20 h-10 text-[10px] uppercase font-black tracking-widest"
+                  onClick={() => handleStatusUpdate(selectedLead.id, CRMStatus.LOST)}
+                >
+                  ✕ Mark as Lost
+                </Button>
+                {selectedLead.status === CRMStatus.PO_RECEIVED && (
+                  <Button 
+                    variant="primary"
+                    className="w-full bg-emerald-500 hover:bg-emerald-600 h-12 text-[10px] uppercase font-black tracking-widest shadow-lg shadow-emerald-500/20"
+                    onClick={() => setViewMode('convert')}
+                  >
+                    🚀 Execute Onboarding
+                  </Button>
+                )}
+              </div>
+            </div>
+          </div>
+
+          {/* Main Management Interface */}
+          <div className="lg:col-span-3 space-y-6">
+            <div className="bg-white rounded-3xl border border-stone-200 overflow-hidden shadow-sm">
+              <div className="flex border-b border-stone-100 flex-wrap">
+                {[
+                  { id: 'enquiry', label: 'Requirements & Enquiries' },
+                  { id: 'meeting', label: 'Meeting Protocol' },
+                  { id: 'quote', label: 'Quotation Versions' },
+                ].map(tab => (
+                  <button 
+                    key={tab.id}
+                    onClick={() => setActiveVersionTab(tab.id as any)}
+                    className={`flex-1 py-4 px-4 text-[10px] uppercase font-black tracking-[0.2em] transition-all min-w-[120px] ${
+                      activeVersionTab === tab.id ? 'bg-stone-50 text-accent-sage border-b-2 border-accent-sage' : 'text-stone-400'
+                    }`}
+                  >
+                    {tab.label}
+                  </button>
+                ))}
+              </div>
+
+              <div className="p-8">
+                {activeVersionTab === 'enquiry' && (
+                  <div className="space-y-8">
+                    <div className="space-y-4">
+                      <label className="text-[10px] font-black uppercase tracking-widest text-stone-400">Log New Requirement / Enquiry Version</label>
+                      <textarea 
+                        className="w-full min-h-[120px] p-6 bg-stone-50 border border-stone-200 rounded-2xl text-sm focus:ring-2 focus:ring-accent-sage/20 focus:border-accent-sage outline-none transition-all resize-none font-medium text-stone-900"
+                        placeholder="Detail specific enquiry parameters..."
+                        value={newEnquiry}
+                        onChange={(e) => setNewEnquiry(e.target.value)}
+                      />
+                      <Button 
+                        disabled={!newEnquiry}
+                        className="w-full uppercase tracking-widest text-[10px] font-black h-12"
+                        onClick={async () => {
+                          const version = (selectedLead.enquiryVersions?.length || 0) + 1;
+                          const updatedVersions = [...(selectedLead.enquiryVersions || []), {
+                            id: Math.random().toString(36).substr(2, 9),
+                            version,
+                            details: newEnquiry,
+                            date: new Date().toISOString()
+                          }];
+                          await updateDoc(doc(db, 'leads', selectedLead.id), {
+                            enquiryVersions: updatedVersions,
+                            status: CRMStatus.ENQUIRY_RECEIVED
+                          });
+                          setNewEnquiry('');
+                        }}
+                      >
+                        Capture Enquiry Version
+                      </Button>
+                    </div>
+
+                    <div className="space-y-4">
+                      <h4 className="text-[10px] font-black uppercase tracking-widest text-stone-400">Enquiry History</h4>
+                      <div className="space-y-4">
+                        {(selectedLead.enquiryVersions || []).slice().reverse().map(ev => (
+                          <div key={ev.id} className="p-4 bg-stone-50 rounded-2xl border border-stone-100">
+                             <div className="flex justify-between items-center mb-2">
+                               <span className="text-[10px] font-bold text-accent-sage uppercase tracking-widest">Version {ev.version}</span>
+                               <span className="text-[9px] font-medium text-stone-400">{format(new Date(ev.date), 'MMM d, p')}</span>
+                             </div>
+                             <p className="text-xs text-stone-600 font-medium leading-relaxed">{ev.details}</p>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                {activeVersionTab === 'meeting' && (
+                  <div className="space-y-8">
+                    {!selectedLead.appointmentDate || selectedLead.status === CRMStatus.YET_TO_MEET ? (
+                      <div className="space-y-4 p-8 bg-blue-50/50 rounded-3xl border border-blue-100">
+                        <div className="flex items-center gap-2 mb-2">
+                          <div className="w-2 h-2 rounded-full bg-blue-500 animate-pulse" />
+                          <h4 className="text-[10px] font-black uppercase tracking-widest text-blue-600">Phase: Scheduling</h4>
+                        </div>
+                        <p className="text-xs text-blue-800/70 font-medium">Select a future coordinate for the product demonstration meeting.</p>
+                        <input 
+                          type="datetime-local"
+                          className="w-full p-4 bg-white border border-blue-100 rounded-2xl text-sm outline-none font-bold text-blue-900"
+                          value={apptDate}
+                          onChange={(e) => setApptDate(e.target.value)}
+                        />
+                        <Button 
+                          className="w-full bg-blue-600 hover:bg-blue-700 h-12 uppercase text-[10px] tracking-widest font-black"
+                          onClick={scheduleAppointment}
+                        >
+                          Confirm Appointment
+                        </Button>
+                      </div>
+                    ) : (
+                      <div className="space-y-6">
+                        <div className="p-4 bg-emerald-50 rounded-2xl border border-emerald-100 flex items-center justify-between">
+                          <div>
+                             <span className="text-[10px] font-black text-emerald-600 uppercase tracking-widest">Appointment Confirmed</span>
+                             <p className="text-xs font-bold text-emerald-900 mt-1">{format(new Date(selectedLead.appointmentDate), 'PPPP @ p')}</p>
+                          </div>
+                          <Button variant="outline" className="h-8 text-[9px] uppercase font-black tracking-widest text-emerald-600 border-emerald-200">Reschedule</Button>
+                        </div>
+
+                        {selectedLead.status !== CRMStatus.MEETING_COMPLETED && (
+                          <div className="space-y-4">
+                            <label className="text-[10px] font-black uppercase tracking-widest text-stone-400">Post-Meeting Analysis</label>
+                            <textarea 
+                              className="w-full min-h-[120px] p-6 bg-stone-50 border border-stone-200 rounded-2xl text-sm focus:ring-2 focus:ring-accent-sage/20 focus:border-accent-sage outline-none transition-all resize-none font-medium"
+                              placeholder="Key takeaways from discussion..."
+                              value={newMeetingNotes}
+                              onChange={(e) => setNewMeetingNotes(e.target.value)}
+                            />
+                            <Button 
+                              className="w-full uppercase tracking-widest text-[10px] font-black h-12"
+                              onClick={completeMeeting}
+                            >
+                              Finalize Meeting Logs
+                            </Button>
+                          </div>
+                        )}
+                        
+                        {selectedLead.meetingNotes && (
+                          <div className="p-6 bg-stone-900 rounded-3xl text-white">
+                             <h4 className="text-[9px] font-black uppercase tracking-[0.2em] text-stone-400 mb-2">Internal Meeting Report</h4>
+                             <p className="text-xs text-stone-300 font-medium leading-relaxed">{selectedLead.meetingNotes}</p>
+                          </div>
+                        )}
+                      </div>
+                    )}
+                  </div>
+                )}
+
+                {activeVersionTab === 'quote' && (
+                  <div className="space-y-8">
+                    {/* Simplified Quotation Listing and Creation */}
+                    <div className="flex flex-col gap-4">
+                       <div className="p-12 text-center bg-stone-50 rounded-[2rem] border border-dashed border-stone-200">
+                          <FileText className="mx-auto text-stone-200 mb-4" size={48} />
+                          <h4 className="text-sm font-black text-stone-400 uppercase tracking-widest">Pricing Versions Protocol</h4>
+                          <p className="text-[10px] text-stone-400 mt-2 font-medium max-w-xs mx-auto">Track every quotation variant shared during negotiations.</p>
+                       </div>
+                       
+                       <div className="space-y-4">
+                          {(selectedLead.quotationVersions || []).map((qv, idx) => (
+                             <div key={qv.id} className="p-4 bg-white border border-stone-200 rounded-2xl flex items-center justify-between">
+                                <div>
+                                   <div className="flex items-center gap-2">
+                                      <span className="text-[10px] font-black uppercase tracking-widest text-stone-900 underline">V{qv.version}</span>
+                                      <Badge color={qv.status === 'Approved' ? 'green' : 'blue'} className="text-[9px]">{qv.status}</Badge>
+                                   </div>
+                                   <p className="text-xs font-bold text-stone-500 mt-1">₹{qv.totalAmount.toLocaleString()}</p>
+                                </div>
+                                <div className="flex gap-2">
+                                   {qv.status !== 'Approved' && (
+                                     <Button 
+                                       className="h-8 text-[9px] font-black uppercase tracking-widest bg-emerald-500 text-white"
+                                       onClick={async () => {
+                                          const updated = (selectedLead.quotationVersions || []).map(q => 
+                                            q.id === qv.id ? { ...q, status: 'Approved' as const } : q
+                                          );
+                                          await updateDoc(doc(db, 'leads', selectedLead.id), {
+                                            quotationVersions: updated,
+                                            status: CRMStatus.PO_RECEIVED // Approved quote leads to PO
+                                          });
+                                       }}
+                                     >
+                                        Approve
+                                     </Button>
+                                   )}
+                                   <Button variant="ghost" className="h-8 text-[9px] font-black uppercase tracking-widest text-stone-400">View</Button>
+                                </div>
+                             </div>
+                          ))}
+
+                          <Button 
+                            variant="outline" 
+                            className="w-full border-dashed h-12 uppercase font-black text-[10px] tracking-widest text-stone-400 hover:text-stone-900"
+                            onClick={async () => {
+                               const version = (selectedLead.quotationVersions?.length || 0) + 1;
+                               const newVersion = {
+                                  id: Math.random().toString(36).substr(2, 9),
+                                  version,
+                                  items: [],
+                                  totalAmount: 154000, // Mock calculation
+                                  date: new Date().toISOString(),
+                                  status: 'Sent' as const
+                               };
+                               await updateDoc(doc(db, 'leads', selectedLead.id), {
+                                  quotationVersions: [...(selectedLead.quotationVersions || []), newVersion],
+                                  status: CRMStatus.QUOTATION_SHARED
+                               });
+                            }}
+                          >
+                            + Draft New Quotation Variant
+                          </Button>
+                       </div>
+                    </div>
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
+        </div>
       </motion.div>
     );
   }
@@ -347,8 +759,9 @@ export const LeadsPage: React.FC = () => {
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
           <div className="lg:col-span-1 space-y-6">
-            <Card title="Source Lead Profile">
-              <div className="space-y-4">
+            <div className="bg-white rounded-3xl border border-stone-200 p-6 space-y-4">
+              <h3 className="text-sm font-black uppercase tracking-widest text-emerald-900 border-b border-emerald-50 pb-4">Source Lead Profile</h3>
+              <div className="space-y-4 pt-2">
                 <div className="p-4 bg-emerald-50 rounded-2xl border border-emerald-100">
                   <p className="text-[10px] font-bold text-emerald-400 uppercase tracking-widest mb-1">Company</p>
                   <p className="text-base font-black text-emerald-950">{selectedLead.companyName}</p>
@@ -363,10 +776,13 @@ export const LeadsPage: React.FC = () => {
                   <p className="text-xs font-medium text-stone-600">{selectedLead.email}</p>
                 </div>
               </div>
-            </Card>
+            </div>
           </div>
 
-          <Card className="lg:col-span-2" title="Commercial Registration Details">
+          <div className="lg:col-span-2 bg-white rounded-3xl border border-stone-200 overflow-hidden">
+            <div className="p-6 border-b border-stone-100 bg-stone-50/50">
+              <h3 className="text-sm font-black uppercase tracking-widest text-stone-600">Commercial Registration Details</h3>
+            </div>
             <form onSubmit={handleConvertLead} className="p-8 space-y-8">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                 <Input 
@@ -417,7 +833,7 @@ export const LeadsPage: React.FC = () => {
                 </Button>
               </div>
             </form>
-          </Card>
+          </div>
         </div>
       </motion.div>
     );
@@ -482,6 +898,7 @@ export const LeadsPage: React.FC = () => {
               <tr>
                 <th className="px-6 py-4 text-[10px] font-black uppercase tracking-widest text-stone-500">Company & Contact</th>
                 <th className="px-6 py-4 text-[10px] font-black uppercase tracking-widest text-stone-500">Requirements</th>
+                <th className="px-6 py-4 text-[10px] font-black uppercase tracking-widest text-stone-500">Created</th>
                 <th className="px-6 py-4 text-[10px] font-black uppercase tracking-widest text-stone-500">Status</th>
                 <th className="px-6 py-4 text-[10px] font-black uppercase tracking-widest text-stone-500 text-right">Actions</th>
               </tr>
@@ -514,18 +931,34 @@ export const LeadsPage: React.FC = () => {
                       <p className="text-xs text-text-muted line-clamp-2 leading-relaxed">{lead.requirements}</p>
                     </td>
                     <td className="px-6 py-5">
-                      <Badge color={
-                        lead.status === CRMStatus.CONVERTED ? 'green' : 
-                        lead.status === CRMStatus.QUOTATION_SHARED ? 'blue' :
-                        lead.status === CRMStatus.ENQUIRY_RECEIVED ? 'orange' :
-                        'indigo'
-                      }>
-                        {lead.status}
-                      </Badge>
+                      <p className="text-[10px] font-bold text-stone-400">{formatDate(lead.createdAt)}</p>
                     </td>
                     <td className="px-6 py-5">
-                      <div className="flex justify-end gap-2">
-                        {lead.status === CRMStatus.CONVERTED ? (
+              <Badge color={
+                lead.status === CRMStatus.DRAFT ? 'gray' :
+                lead.status === CRMStatus.NEW_LEAD ? 'indigo' :
+                lead.status === CRMStatus.CONVERTED ? 'green' : 
+                lead.status === CRMStatus.QUOTATION_SHARED ? 'blue' :
+                lead.status === CRMStatus.ENQUIRY_RECEIVED ? 'orange' :
+                lead.status === CRMStatus.LOST ? 'red' :
+                lead.status === CRMStatus.ON_HOLD ? 'gray' :
+                'indigo'
+              }>
+                {lead.status}
+              </Badge>
+            </td>
+            <td className="px-6 py-5">
+              <div className="flex justify-end gap-2">
+                <button
+                  onClick={() => {
+                    setSelectedLeadId(lead.id);
+                    setViewMode('manage');
+                  }}
+                  className="h-8 px-4 text-[9px] font-black uppercase tracking-widest bg-stone-900 text-white rounded-lg hover:bg-stone-800 transition-all"
+                >
+                  Manage Protocol
+                </button>
+                {lead.status === CRMStatus.CONVERTED ? (
                           <div className="flex items-center gap-2 text-emerald-600 font-bold text-[9px] uppercase tracking-widest bg-emerald-50 px-3 py-1.5 rounded-full">
                             <CheckCircle2 size={12} /> Onboarded
                           </div>
@@ -544,7 +977,7 @@ export const LeadsPage: React.FC = () => {
                                 size="sm" 
                                 className="h-8 px-4 text-[9px] uppercase font-black tracking-[0.1em] bg-emerald-600 hover:bg-emerald-700 shadow-md"
                                 onClick={() => {
-                                  setSelectedLead(lead);
+                                  setSelectedLeadId(lead.id);
                                   setViewMode('convert');
                                 }}
                               >

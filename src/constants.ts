@@ -51,6 +51,7 @@ export const SAMPLE_INVOICES: Invoice[] = [
     taxTotal: 3625.20,
     grandTotal: 23765.20,
     paidAmount: 23765.20,
+    advanceAmount: 0,
     status: PaymentStatus.PAID,
     createdAt: '2024-03-15T10:00:00Z',
   },
@@ -76,6 +77,7 @@ export const SAMPLE_INVOICES: Invoice[] = [
     taxTotal: 2880.00,
     grandTotal: 26880.00,
     paidAmount: 10000.00,
+    advanceAmount: 0,
     status: PaymentStatus.PARTIALLY_PAID,
     createdAt: '2024-03-20T11:00:00Z',
   }
