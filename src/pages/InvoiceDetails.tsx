@@ -1,7 +1,7 @@
 import React from 'react';
-import { Card, Button, Badge } from '../components/UI';
+import { Button, Badge } from '../components/UI';
 import { Invoice, PaymentStatus } from '../types';
-import { ArrowLeft, Download, Printer, CheckCircle, Clock, AlertCircle } from 'lucide-react';
+import { ArrowLeft, Download, Printer, CheckCircle, Clock, Truck, Package, MapPin } from 'lucide-react';
 
 interface InvoiceDetailsProps {
   invoice: Invoice;
@@ -21,6 +21,30 @@ export const InvoiceDetails: React.FC<InvoiceDetailsProps> = ({ invoice, onBack 
 
   return (
     <div className="space-y-8 pb-12 animate-in fade-in zoom-in-95 duration-500">
+      {/* Workflow Progress */}
+      <div className="max-w-4xl mx-auto px-4">
+        <div className="flex items-center justify-between relative">
+          <div className="absolute top-1/2 left-0 w-full h-0.5 bg-stone-100 -translate-y-1/2 z-0" />
+          {[
+            { id: 'created', label: 'Invoiced', icon: CheckCircle, active: true },
+            { id: 'payment', label: 'Payment', icon: Clock, active: invoice.paidAmount > 0 },
+            { id: 'dispatch', label: 'Dispatch', icon: Truck, active: !!invoice.trackingNumber },
+            { id: 'pod', label: 'POD', icon: CheckCircle, active: invoice.dispatchStatus === 'Delivered' }
+          ].map((step, idx) => (
+            <div key={idx} className="relative z-10 flex flex-col items-center gap-2 group">
+              <div className={`w-8 h-8 rounded-full flex items-center justify-center border-2 transition-all duration-500 ${
+                step.active ? 'bg-emerald-500 border-emerald-500 text-white shadow-lg shadow-emerald-500/20' : 'bg-white border-stone-200 text-stone-300'
+              }`}>
+                <step.icon size={14} />
+              </div>
+              <span className={`text-[9px] font-black uppercase tracking-widest ${step.active ? 'text-emerald-600' : 'text-stone-400'}`}>
+                {step.label}
+              </span>
+            </div>
+          ))}
+        </div>
+      </div>
+
       <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-4">
         <button onClick={onBack} className="flex items-center gap-2 text-text-muted hover:text-text-main transition-colors text-sm font-bold">
           <ArrowLeft size={18} /> Back to Invoices
@@ -73,6 +97,43 @@ export const InvoiceDetails: React.FC<InvoiceDetailsProps> = ({ invoice, onBack 
               </div>
             </div>
           </div>
+
+          {/* Logistics Section */}
+          {invoice.trackingNumber && (
+            <div className="mt-8 p-6 bg-blue-50/50 rounded-2xl border border-blue-100 flex flex-col md:flex-row gap-6">
+               <div className="flex-1 space-y-4">
+                  <div className="flex items-center gap-2">
+                     <Package className="text-blue-500" size={18} />
+                     <h4 className="text-[10px] font-black uppercase tracking-widest text-blue-600">Dispatch Details</h4>
+                  </div>
+                  <div className="grid grid-cols-2 gap-4">
+                     <div>
+                        <p className="text-[9px] font-bold text-stone-400 uppercase tracking-widest mb-1">Carrier</p>
+                        <p className="text-xs font-bold text-stone-700">{invoice.courierPartner || 'Not Specified'}</p>
+                     </div>
+                     <div>
+                        <p className="text-[9px] font-bold text-stone-400 uppercase tracking-widest mb-1">Tracking ID</p>
+                        <p className="text-xs font-mono font-bold text-stone-700">{invoice.trackingNumber}</p>
+                     </div>
+                  </div>
+               </div>
+               {invoice.dispatchStatus === 'Delivered' && (
+                 <div className="flex-1 space-y-4 border-l md:border-stone-200 md:pl-6">
+                    <div className="flex items-center gap-2">
+                       <MapPin className="text-emerald-500" size={18} />
+                       <h4 className="text-[10px] font-black uppercase tracking-widest text-emerald-600">Delivery Confirmation</h4>
+                    </div>
+                    <div>
+                       <p className="text-[9px] font-bold text-stone-400 uppercase tracking-widest mb-1">Status</p>
+                       <p className="text-xs font-bold text-emerald-700 underline decoration-dotted">Proof of Delivery Verified (POD)</p>
+                       {invoice.deliveryProofUrl && (
+                          <a href={invoice.deliveryProofUrl} target="_blank" rel="noopener noreferrer" className="text-[10px] text-blue-500 font-bold hover:underline block mt-1">View POD Document →</a>
+                       )}
+                    </div>
+                 </div>
+               )}
+            </div>
+          )}
 
           {/* Table */}
           <div className="overflow-x-auto -mx-6 md:mx-0 border border-border-base rounded-xl mb-12">

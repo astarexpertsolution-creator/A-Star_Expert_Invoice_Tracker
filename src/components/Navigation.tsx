@@ -169,7 +169,14 @@ export const Sidebar: React.FC<SidebarProps> = ({ activeTab, setActiveTab, isCol
   );
 };
 
-export const TopBar: React.FC<{ title: string; onMenuClick: () => void; onBack?: () => void; showBack?: boolean }> = ({ title, onMenuClick, onBack, showBack }) => {
+export const TopBar: React.FC<{ 
+  title: string; 
+  onMenuClick: () => void; 
+  onBack?: () => void; 
+  showBack?: boolean; 
+  isBypassMode?: boolean;
+  dbStatus?: 'connected' | 'error' | 'testing';
+}> = ({ title, onMenuClick, onBack, showBack, isBypassMode, dbStatus }) => {
   return (
     <header className="h-16 md:h-20 px-4 md:px-10 flex items-center justify-between bg-[var(--theme-card-bg,white)] border-b border-border-base sticky top-0 z-40 transition-colors shrink-0">
       <div className="flex items-center gap-3">
@@ -192,6 +199,31 @@ export const TopBar: React.FC<{ title: string; onMenuClick: () => void; onBack?:
           <span className="text-stone-300 dark:text-stone-700">/</span>
         </div>
         <span className="text-sm font-black text-text-main uppercase tracking-widest truncate max-w-[150px] sm:max-w-none">{title}</span>
+        
+        <div className="flex items-center gap-2 ml-4">
+          {isBypassMode && (
+            <div className="px-2 py-1 rounded-md bg-stone-900 text-white text-[8px] font-black uppercase tracking-widest flex items-center gap-2">
+              <span className="w-1.5 h-1.5 rounded-full bg-amber-500" />
+              Demo Mode
+            </div>
+          )}
+          {dbStatus === 'connected' ? (
+            <div className="px-2 py-1 rounded-md bg-emerald-50 text-emerald-600 text-[8px] font-black uppercase tracking-widest flex items-center gap-2 border border-emerald-100">
+              <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
+              Live DB
+            </div>
+          ) : dbStatus === 'error' ? (
+            <div className="px-2 py-1 rounded-md bg-red-50 text-red-600 text-[8px] font-black uppercase tracking-widest flex items-center gap-2 border border-red-100">
+              <span className="w-1.5 h-1.5 rounded-full bg-red-500 animate-pulse" />
+              DB Offline
+            </div>
+          ) : (
+            <div className="px-2 py-1 rounded-md bg-stone-50 text-stone-400 text-[8px] font-black uppercase tracking-widest flex items-center gap-2 border border-stone-100 transition-opacity">
+              <span className="w-1.5 h-1.5 rounded-full bg-stone-300 animate-pulse" />
+              Syncing...
+            </div>
+          )}
+        </div>
       </div>
       <div className="flex items-center gap-3 md:gap-8">
         <div className="relative hidden md:block">

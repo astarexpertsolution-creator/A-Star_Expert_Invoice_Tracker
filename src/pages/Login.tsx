@@ -1,34 +1,37 @@
 import React, { useState } from 'react';
 import { Card, Button } from '../components/UI';
-import { ChevronRight } from 'lucide-react';
+import { ChevronRight, AlertCircle } from 'lucide-react';
 import { motion } from 'motion/react';
 import { signInAnonymously, GoogleAuthProvider, signInWithPopup } from 'firebase/auth';
 import { auth } from '../lib/firebase';
 
-export const Login: React.FC<{ onLogin: () => void }> = ({ onLogin }) => {
+export const Login: React.FC<{ onLogin: () => void; onBypass: () => void }> = ({ onLogin, onBypass }) => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const handleBypassLogin = async () => {
+  const handleBypassLogin = () => {
+    console.warn('ENTERING OFF-AUTH EMERGENCY MODE');
+    onBypass();
+  };
+
+  const handleGoogleLogin = async () => {
     setLoading(true);
     setError(null);
-    
-    // Add a race condition to prevent hanging indefinitely
-    const timeout = new Promise((_, reject) => 
-      setTimeout(() => reject(new Error('Authentication Timeout')), 8000)
-    );
-
     try {
-      await Promise.race([signInAnonymously(auth), timeout]);
+      const provider = new GoogleAuthProvider();
+      await signInWithPopup(auth, provider);
       onLogin();
-    } catch (err: any) {
-      console.error('Bypass login failed or timed out:', err);
-      // Fallback: still call onLogin to allow UI traversal, 
-      // but warn that DB operations might fail if rules are strict.
-      onLogin();
-    } finally {
+    } catch (err: unknown) {
+      const errorObject = err as { message?: string; code?: string };
+      console.error('Google login failed:', errorObject);
+      setError(`Google Login failed: ${errorObject.message || 'Ensure Google provider is enabled in Firebase Console.'}`);
       setLoading(false);
     }
+  };
+
+  const handleEmergencyBypass = () => {
+    console.warn('ENTERING OFF-AUTH EMERGENCY MODE');
+    onBypass();
   };
 
   return (
@@ -64,8 +67,37 @@ export const Login: React.FC<{ onLogin: () => void }> = ({ onLogin }) => {
           <div className="space-y-8 text-center">
             <div className="space-y-4">
               <h1 className="text-2xl font-black text-text-main uppercase tracking-tighter">System Access</h1>
-              <p className="text-sm text-text-muted">Initialize enterprise protocol to access the Distributor Portal. SSO is currently disabled.</p>
+              <p className="text-sm text-text-muted">Initialize enterprise protocol to access the Distributor Portal. Authenticated session is required for database write operations.</p>
             </div>
+
+            {error && (
+              <div className="p-6 bg-red-50 border-2 border-red-100 rounded-3xl text-red-600 text-[11px] font-bold leading-relaxed whitespace-pre-wrap text-left shadow-sm">
+                <div className="flex items-center gap-2 mb-3 text-red-700 font-black uppercase tracking-widest text-[9px]">
+                  <AlertCircle size={14} /> Critical: Access Protocol Terminated
+                </div>
+                {error}
+                <div className="mt-6 flex flex-col items-center">
+                  <Button 
+                    variant="primary" 
+                    onClick={handleEmergencyBypass}
+                    className="w-full h-11 text-[9px] font-black uppercase tracking-[0.2em] bg-red-600 hover:bg-red-700 border-none shadow-lg"
+                  >
+                    Enter App with Emergency Bypass
+                  </Button>
+                  <p className="text-[8px] text-red-400 mt-2 uppercase font-black text-center tracking-widest px-4">
+                    (Access UI while Firebase configuration synchronizes)
+                  </p>
+                  <Button 
+                    variant="outline" 
+                    size="sm" 
+                    onClick={() => window.location.reload()}
+                    className="mt-6 w-full h-10 text-[9px] font-black uppercase tracking-widest border-red-200 text-red-700 hover:bg-red-100"
+                  >
+                    Reload & Retry Authentication
+                  </Button>
+                </div>
+              </div>
+            )}
 
             <Button 
               variant="primary" 
@@ -76,9 +108,35 @@ export const Login: React.FC<{ onLogin: () => void }> = ({ onLogin }) => {
               Initialize System Session <ChevronRight size={18} className="ml-2" />
             </Button>
 
+            <div className="flex items-center gap-4 py-2">
+              <div className="h-px bg-stone-100 flex-1" />
+              <span className="text-[9px] font-black text-stone-300 uppercase tracking-widest">OR</span>
+              <div className="h-px bg-stone-100 flex-1" />
+            </div>
+
+            <Button 
+              variant="outline" 
+              onClick={handleGoogleLogin} 
+              className="w-full h-14 text-[10px] font-black uppercase tracking-[0.2em] !rounded-[1.25rem] border-stone-200 hover:bg-stone-50 gap-3" 
+            >
+              Sign in with Google Account
+            </Button>
+
             <p className="text-[10px] font-bold text-stone-400 uppercase tracking-widest">
               Authorized Personnel Access Only
             </p>
+
+            <div className="pt-4 mt-8 border-t border-stone-100">
+               <button 
+                 onClick={handleEmergencyBypass}
+                 className="text-[9px] font-black uppercase tracking-widest text-stone-300 hover:text-stone-500 transition-colors"
+               >
+                 Troubleshoot: Emergency Manual Bypass
+               </button>
+               <p className="text-[8px] text-stone-200 mt-1 uppercase font-bold">
+                 Note: Database features may be limited without Firebase session
+               </p>
+            </div>
           </div>
         </Card>
 

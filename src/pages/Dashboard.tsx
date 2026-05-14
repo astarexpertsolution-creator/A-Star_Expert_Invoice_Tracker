@@ -1,18 +1,27 @@
 import React from 'react';
-import { Card } from '../components/UI';
+import { Card, Button, Badge } from '../components/UI';
 import { DollarSign, FileText, CheckCircle, Clock, AlertCircle, ShoppingCart, UserPlus, Users, Calendar, Package, Truck, LayoutDashboard } from 'lucide-react';
 import { PaymentStatus, Invoice, Lead, CRMStatus } from '../types';
-import { Badge } from '../components/UI';
 import { motion } from 'motion/react';
 
 export const Dashboard: React.FC<{ 
   invoices: Invoice[], 
   leads: Lead[],
+  trackerItems?: any[],
+  products?: any[],
   onNavigate: (tab: string) => void 
-}> = ({ invoices, leads, onNavigate }) => {
+}> = ({ invoices, leads, trackerItems = [], products = [], onNavigate }) => {
   const totalAmount = invoices.reduce((acc, inv) => acc + inv.grandTotal, 0);
   const totalPaid = invoices.reduce((acc, inv) => acc + inv.paidAmount, 0);
   const pendingAmount = totalAmount - totalPaid;
+
+  const formatDate = (date: any) => {
+    if (!date) return '';
+    try {
+      const d = date.toDate ? date.toDate() : new Date(date);
+      return d.toLocaleDateString('en-IN', { day: '2-digit', month: 'short' });
+    } catch (e) { return ''; }
+  };
 
   const stats = [
     { label: 'Total', value: invoices.length, color: 'text-text-main', border: 'border-border-base' },
@@ -122,6 +131,44 @@ export const Dashboard: React.FC<{
         </div>
 
         <div className="space-y-6">
+          <Card title="Protocol Feed" subtitle="Real-time Event Stream">
+             <div className="space-y-6">
+                {(trackerItems || []).slice(0, 4).map((item, idx) => (
+                  <div key={idx} className="flex gap-4 group">
+                     <div className="flex flex-col items-center">
+                        <div className={`w-8 h-8 rounded-lg flex items-center justify-center transition-all ${
+                          item.type === 'payment' ? 'bg-emerald-50 text-emerald-600' :
+                          item.type === 'appointment' ? 'bg-indigo-50 text-indigo-600' :
+                          'bg-stone-50 text-stone-500'
+                        }`}>
+                           {item.type === 'payment' ? <DollarSign size={14} /> : 
+                            item.type === 'appointment' ? <Calendar size={14} /> : 
+                            <Clock size={14} />}
+                        </div>
+                        {idx !== 3 && <div className="w-0.5 h-full bg-stone-100 my-1" />}
+                     </div>
+                     <div className="pb-4">
+                        <div className="flex items-center gap-2 mb-1">
+                           <span className="text-[10px] font-black uppercase tracking-widest text-stone-900">{item.title}</span>
+                           <span className="text-[9px] font-bold text-stone-400">{formatDate(item.createdAt)}</span>
+                        </div>
+                        <p className="text-[10px] text-stone-400 font-medium leading-relaxed">{item.description}</p>
+                     </div>
+                  </div>
+                ))}
+                {(trackerItems || []).length === 0 && (
+                  <p className="text-[10px] text-stone-300 italic text-center py-4">No recent activity protocol recorded.</p>
+                )}
+                <Button 
+                  variant="ghost" 
+                  className="w-full h-10 border border-stone-100 text-[9px] font-black uppercase tracking-widest hover:bg-stone-50"
+                  onClick={() => onNavigate('appointments')}
+                >
+                  View Full Protocol History
+                </Button>
+             </div>
+          </Card>
+
           <div className="grid grid-cols-1 gap-4">
               <button 
                 onClick={() => onNavigate('leads')}

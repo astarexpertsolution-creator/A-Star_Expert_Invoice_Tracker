@@ -17,13 +17,16 @@ export enum CRMStatus {
   YET_TO_MEET = 'Yet to meet',
   APPOINTMENT_SCHEDULED = 'Appointment scheduled',
   MEETING_COMPLETED = 'Meeting completed',
+  SAMPLES_SENT = 'Samples Sent',
   ENQUIRY_RECEIVED = 'Received Enquiry',
+  GATHERING_REQUIREMENT = 'Gathering Requirement',
   QUOTATION_SHARED = 'Shared Quotation',
   NEGOTIATION = 'Negotiation',
   ON_HOLD = 'On Hold',
   PO_RECEIVED = 'PO Received',
   CONVERTED = 'Converted',
   LOST = 'Lost',
+  REJECTED = 'Rejected',
   RESCHEDULED = 'Rescheduled',
 }
 
@@ -130,8 +133,11 @@ export interface PurchaseOrder {
   poDate: string;
   items: InvoiceItem[];
   totalAmount: number;
-  status: 'Pending' | 'Converted' | 'Cancelled';
+  advanceAmount?: number;
+  advancePaid?: number;
+  status: 'Pending' | 'On Hold' | 'Converted' | 'Cancelled';
   documentUrl?: string;
+  createdAt: any;
 }
 
 export interface InvoiceItem {

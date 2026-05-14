@@ -82,3 +82,43 @@ export const SAMPLE_INVOICES: Invoice[] = [
     createdAt: '2024-03-20T11:00:00Z',
   }
 ];
+
+export const SAMPLE_LEADS: Lead[] = [
+  {
+    id: 'l1',
+    companyName: 'Biotronix Lab',
+    contactPerson: 'Dr. Anita Desai',
+    phoneNumber: '9123456780',
+    email: 'anita@biotronix.com',
+    status: 'Interested',
+    createdAt: '2024-05-10T10:00:00Z',
+    notes: 'Interested in GSure Plasmid Kits'
+  },
+  {
+    id: 'l2',
+    companyName: 'Medicity Hospital',
+    contactPerson: 'Rajesh Kumar',
+    phoneNumber: '9234567891',
+    email: 'purchase@medicity.com',
+    status: 'Follow-up',
+    createdAt: '2024-05-12T14:30:00Z',
+    notes: 'Requires bulk quote for Dialyzers'
+  }
+];
+
+export const SAMPLE_TRACKER: any[] = [
+  {
+    id: 't1',
+    type: 'Lead',
+    title: 'Biotronix follow-up',
+    status: 'High',
+    createdAt: '2024-05-14T08:00:00Z'
+  },
+  {
+    id: 't2',
+    type: 'Order',
+    title: 'Global Retailers dispatch',
+    status: 'Medium',
+    createdAt: '2024-05-14T10:00:00Z'
+  }
+];

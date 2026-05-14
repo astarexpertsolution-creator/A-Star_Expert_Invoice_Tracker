@@ -12,27 +12,37 @@ import { CustomizePage } from './pages/Customize';
 import { InvoiceCreation } from './pages/InvoiceCreation';
 import { InvoiceDetails } from './pages/InvoiceDetails';
 import { Login } from './pages/Login';
-import { SAMPLE_PRODUCTS, SAMPLE_CUSTOMERS, SAMPLE_INVOICES } from './constants';
+import { SAMPLE_PRODUCTS, SAMPLE_CUSTOMERS, SAMPLE_INVOICES, SAMPLE_LEADS, SAMPLE_TRACKER } from './constants';
 import { Product, Customer, Invoice, PaymentStatus, Lead } from './types';
 import { Card, Button, Input, Select } from './components/UI';
 import { X } from 'lucide-react';
 import { AnimatePresence, motion } from 'motion/react';
 import { db, auth } from './lib/firebase';
-import { onAuthStateChanged } from 'firebase/auth';
-import { collection, onSnapshot, query, orderBy, doc, updateDoc, setDoc, addDoc, serverTimestamp } from 'firebase/firestore';
+import { onAuthStateChanged, signInWithPopup, GoogleAuthProvider } from 'firebase/auth';
+import { collection, onSnapshot, query, orderBy, doc, updateDoc, setDoc, addDoc, serverTimestamp, getDocFromServer } from 'firebase/firestore';
 import { handleFirestoreError, OperationType } from './lib/firestoreUtils';
 
 export default function App() {
   const [isAuthenticated, setIsAuthenticated] = useState<boolean | null>(null);
+  const [isBypassMode, setIsBypassMode] = useState(() => sessionStorage.getItem('crm_bypass') === 'true');
   const [activeTab, setActiveTab] = useState('dashboard');
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(window.innerWidth < 1024);
 
   useEffect(() => {
+    // If we've manually bypassed authentication, don't let the auth state listener reset it
+    if (isBypassMode) {
+      sessionStorage.setItem('crm_bypass', 'true');
+      setIsAuthenticated(true);
+      return;
+    } else {
+      sessionStorage.removeItem('crm_bypass');
+    }
+
     const unsubscribe = onAuthStateChanged(auth, (user) => {
       setIsAuthenticated(!!user);
     });
     return () => unsubscribe();
-  }, []);
+  }, [isBypassMode]);
 
   useEffect(() => {
     const handleResize = () => {
@@ -50,75 +60,88 @@ export default function App() {
   
   // Data State
   const [products, setProducts] = useState<Product[]>(SAMPLE_PRODUCTS);
-  const [customers, setCustomers] = useState<Customer[]>([]);
-  const [invoices, setInvoices] = useState<Invoice[]>([]);
-  const [leads, setLeads] = useState<Lead[]>([]);
-  const [trackerItems, setTrackerItems] = useState<any[]>([]);
+  const [customers, setCustomers] = useState<Customer[]>(SAMPLE_CUSTOMERS);
+  const [invoices, setInvoices] = useState<Invoice[]>(SAMPLE_INVOICES);
+  const [leads, setLeads] = useState<Lead[]>(SAMPLE_LEADS);
+  const [purchaseOrders, setPurchaseOrders] = useState<any[]>([]);
+  const [suppliers, setSuppliers] = useState<Supplier[]>([]);
+  const [trackerItems, setTrackerItems] = useState<any[]>(SAMPLE_TRACKER);
   const [loadingLeads, setLoadingLeads] = useState(true);
   const [loadingCustomers, setLoadingCustomers] = useState(true);
   const [loadingInvoices, setLoadingInvoices] = useState(true);
   const [loadingTracker, setLoadingTracker] = useState(true);
+  const [loadingOrders, setLoadingOrders] = useState(true);
+  const [loadingSuppliers, setLoadingSuppliers] = useState(true);
 
   useEffect(() => {
+    console.log('App Auth Status:', { isAuthenticated, isBypassMode });
     if (!isAuthenticated) return;
     
-    // Sync Leads
-    const leadsRef = collection(db, 'leads');
-    const qLeads = query(leadsRef, orderBy('createdAt', 'desc'));
-    const unsubLeads = onSnapshot(qLeads, (snapshot) => {
-      setLeads(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })) as Lead[]);
+    console.log('Synchronizing with Firestore...');
+    
+    const unsubLeads = onSnapshot(collection(db, 'leads'), (snap) => {
+      setLeads(snap.docs.map(doc => ({ id: doc.id, ...doc.data() })) as Lead[]);
       setLoadingLeads(false);
-    }, (error) => {
-      console.error('Leads sync error:', error);
-      setLoadingLeads(false);
+    }, (e) => { 
+      console.warn('Leads Sync Error (possibly unauthenticated):', e);
+      handleFirestoreError(e, OperationType.LIST, 'leads'); 
+      setLoadingLeads(false); 
     });
 
-    // Sync Customers
-    const custRef = collection(db, 'customers');
-    const qCust = query(custRef, orderBy('createdAt', 'desc'));
-    const unsubCust = onSnapshot(qCust, (snapshot) => {
-      setCustomers(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })) as Customer[]);
+    const unsubCust = onSnapshot(collection(db, 'customers'), (snap) => {
+      setCustomers(snap.docs.map(doc => ({ id: doc.id, ...doc.data() })) as Customer[]);
       setLoadingCustomers(false);
-    }, (error) => {
-      console.error('Customers sync error:', error);
-      setLoadingCustomers(false);
-    });
+    }, (e) => { handleFirestoreError(e, OperationType.LIST, 'customers'); setLoadingCustomers(false); });
 
-    // Sync Invoices
-    const invRef = collection(db, 'invoices');
-    const qInv = query(invRef, orderBy('createdAt', 'desc'));
-    const unsubInv = onSnapshot(qInv, (snapshot) => {
-      setInvoices(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })) as Invoice[]);
+    const unsubInv = onSnapshot(collection(db, 'invoices'), (snap) => {
+      setInvoices(snap.docs.map(doc => ({ id: doc.id, ...doc.data() })) as Invoice[]);
       setLoadingInvoices(false);
-    }, (error) => {
-      console.error('Invoices sync error:', error);
-      setLoadingInvoices(false);
-    });
+    }, (e) => { handleFirestoreError(e, OperationType.LIST, 'invoices'); setLoadingInvoices(false); });
 
-    // Sync Tracker
-    const trackerRef = collection(db, 'tracker');
-    const qTracker = query(trackerRef, orderBy('createdAt', 'desc'));
-    const unsubTracker = onSnapshot(qTracker, (snapshot) => {
-      setTrackerItems(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })));
+    const unsubTracker = onSnapshot(collection(db, 'tracker'), (snap) => {
+      setTrackerItems(snap.docs.map(doc => ({ id: doc.id, ...doc.data() })));
       setLoadingTracker(false);
-    }, (error) => {
-      console.error('Tracker sync error:', error);
-      setLoadingTracker(false);
-    });
+    }, (e) => { handleFirestoreError(e, OperationType.LIST, 'tracker'); setLoadingTracker(false); });
+
+    const unsubOrders = onSnapshot(collection(db, 'purchase_orders'), (snap) => {
+      setPurchaseOrders(snap.docs.map(doc => ({ id: doc.id, ...doc.data() })));
+      setLoadingOrders(false);
+    }, (e) => { handleFirestoreError(e, OperationType.LIST, 'purchase_orders'); setLoadingOrders(false); });
+
+    const unsubSuppliers = onSnapshot(collection(db, 'suppliers'), (snap) => {
+      setSuppliers(snap.docs.map(doc => ({ id: doc.id, ...doc.data() })) as Supplier[]);
+      setLoadingSuppliers(false);
+    }, (e) => { handleFirestoreError(e, OperationType.LIST, 'suppliers'); setLoadingSuppliers(false); });
 
     return () => {
-      unsubLeads();
-      unsubCust();
-      unsubInv();
-      unsubTracker();
+      unsubLeads(); unsubCust(); unsubInv(); unsubTracker(); unsubOrders(); unsubSuppliers();
     };
-  }, [isAuthenticated]);
+  }, [isAuthenticated, isBypassMode]);
   
   // Sub-navigation state
   const [viewingInvoice, setViewingInvoice] = useState<Invoice | null>(null);
   const [isCreatingInvoice, setIsCreatingInvoice] = useState(false);
   const [payingInvoice, setPayingInvoice] = useState<Invoice | null>(null);
   const [updatingLogistics, setUpdatingLogistics] = useState<Invoice | null>(null);
+  const [dbStatus, setDbStatus] = useState<'connected' | 'error' | 'testing'>('testing');
+
+  useEffect(() => {
+    async function testConnection() {
+      try {
+        await getDocFromServer(doc(db, 'test', 'connection'));
+        setDbStatus('connected');
+      } catch (error) {
+        console.warn('Firestore Connection Test Failed:', error);
+        if (error instanceof Error && error.message.includes('the client is offline')) {
+          setDbStatus('error');
+        } else {
+          // If it's a permissions error but we reached the server, it's "connected" enough
+          setDbStatus('connected');
+        }
+      }
+    }
+    testConnection();
+  }, []);
 
   // Logistics Form State
   const [logisticsData, setLogisticsData] = useState({
@@ -159,8 +182,21 @@ export default function App() {
     );
   }
 
-  if (!isAuthenticated) {
-    return <Login onLogin={() => setIsAuthenticated(true)} />;
+  if (!isAuthenticated && !isBypassMode) {
+    return (
+      <Login 
+        onLogin={() => {
+          sessionStorage.removeItem('crm_bypass');
+          setIsBypassMode(false);
+          setIsAuthenticated(true);
+        }} 
+        onBypass={() => {
+          sessionStorage.setItem('crm_bypass', 'true');
+          setIsBypassMode(true);
+          setIsAuthenticated(true);
+        }} 
+      />
+    );
   }
 
   const handleCreateInvoice = async (newInvoiceData: Omit<Invoice, 'id' | 'createdAt'>) => {
@@ -168,28 +204,43 @@ export default function App() {
       const invRef = collection(db, 'invoices');
       await addDoc(invRef, {
         ...newInvoiceData,
-        createdAt: new Date().toISOString(), // Keeping string for model consistency or matching serverTimestamp()
+        createdAt: new Date().toISOString(),
         serverCreatedAt: serverTimestamp()
       });
       setIsCreatingInvoice(false);
       setActiveTab('invoices');
     } catch (e) {
-      handleFirestoreError(e, OperationType.CREATE, 'invoices');
+      console.error('Firestore Create Invoice Error:', e);
+      if (isBypassMode) {
+        const newInv = { ...newInvoiceData, id: `inv-${Date.now()}`, createdAt: new Date().toISOString() };
+        setInvoices([newInv, ...invoices]);
+        setIsCreatingInvoice(false);
+        setActiveTab('invoices');
+      } else {
+        handleFirestoreError(e, OperationType.CREATE, 'invoices');
+      }
     }
   };
 
   const handleUpdatePayment = async () => {
     if (!payingInvoice) return;
-    try {
-      const newPaidAmount = payingInvoice.paidAmount + paymentAmount;
-      let newStatus = payingInvoice.status;
-      
-      if (newPaidAmount >= payingInvoice.grandTotal) {
-        newStatus = PaymentStatus.PAID;
-      } else if (newPaidAmount > 0) {
-        newStatus = PaymentStatus.PARTIALLY_PAID;
-      }
+    const newPaidAmount = payingInvoice.paidAmount + paymentAmount;
+    let newStatus = payingInvoice.status;
+    
+    if (newPaidAmount >= payingInvoice.grandTotal) {
+      newStatus = PaymentStatus.PAID;
+    } else if (newPaidAmount > 0) {
+      newStatus = PaymentStatus.PARTIALLY_PAID;
+    }
 
+    if (isBypassMode) {
+      setInvoices(invoices.map(inv => inv.id === payingInvoice.id ? { ...inv, paidAmount: newPaidAmount, status: newStatus } : inv));
+      setPayingInvoice(null);
+      setPaymentAmount(0);
+      return;
+    }
+
+    try {
       await updateDoc(doc(db, 'invoices', payingInvoice.id), {
         paidAmount: newPaidAmount,
         status: newStatus,
@@ -205,6 +256,18 @@ export default function App() {
 
   const handleUpdateLogistics = async () => {
     if (!updatingLogistics) return;
+    
+    if (isBypassMode) {
+      setInvoices(invoices.map(inv => inv.id === updatingLogistics.id ? { 
+        ...inv, 
+        ...logisticsData, 
+        dispatchStatus: logisticsData.deliveryProofUrl ? 'Delivered' : 'Dispatched' as any 
+      } : inv));
+      setUpdatingLogistics(null);
+      setLogisticsData({ trackingNumber: '', courierPartner: '', logisticsNotes: '', deliveryProofUrl: '' });
+      return;
+    }
+
     try {
       await updateDoc(doc(db, 'invoices', updatingLogistics.id), {
         ...logisticsData,
@@ -237,7 +300,15 @@ export default function App() {
 
     switch (activeTab) {
       case 'dashboard':
-        return <Dashboard invoices={invoices} leads={leads} onNavigate={setActiveTab} />;
+        return (
+          <Dashboard 
+            invoices={invoices} 
+            leads={leads} 
+            trackerItems={trackerItems}
+            products={products}
+            onNavigate={setActiveTab} 
+          />
+        );
       case 'products':
         return (
           <ProductsPage 
@@ -248,21 +319,78 @@ export default function App() {
           />
         );
       case 'leads':
-        return <LeadsPage externalLeads={leads} loadingLeads={loadingLeads} />;
+        return (
+          <LeadsPage 
+            externalLeads={leads} 
+            loadingLeads={loadingLeads} 
+            isBypassMode={isBypassMode}
+            dbStatus={dbStatus}
+            onUpdate={async (id, data) => {
+              if (id === 'seed-mock') {
+                setLeads(data as any);
+                return;
+              }
+              try {
+                await updateDoc(doc(db, 'leads', id), { ...data, updatedAt: serverTimestamp() });
+              } catch (e) {
+                console.error('Firestore Update Lead Error:', e);
+                if (isBypassMode) {
+                  setLeads(leads.map(l => l.id === id ? { ...l, ...data } : l));
+                } else {
+                  handleFirestoreError(e, OperationType.UPDATE, 'leads');
+                }
+              }
+            }}
+            onCreate={async (data) => {
+              try {
+                await addDoc(collection(db, 'leads'), { ...data, createdAt: serverTimestamp(), updatedAt: serverTimestamp() });
+              } catch (e) {
+                console.error('Firestore Create Lead Error:', e);
+                if (isBypassMode) {
+                  // Fallback to local state if Firestore write fails in bypass mode
+                  setLeads([{ ...data, id: `lead-${Date.now()}` } as Lead, ...leads]);
+                } else {
+                  handleFirestoreError(e, OperationType.CREATE, 'leads');
+                }
+              }
+            }}
+          />
+        );
       case 'appointments':
         return <AppointmentsPage externalItems={trackerItems} />;
       case 'customers':
         return (
           <CustomersPage 
             customers={customers} 
-            onAdd={(c) => {
-              const custRef = collection(db, 'customers');
-              addDoc(custRef, { ...c, createdAt: serverTimestamp() });
+            onAdd={async (c) => {
+              try {
+                const custRef = collection(db, 'customers');
+                await addDoc(custRef, { ...c, createdAt: serverTimestamp() });
+              } catch (e) {
+                console.error('Firestore Customer Add Error:', e);
+                if (isBypassMode) {
+                  setCustomers([...customers, { ...c, id: `c-${Date.now()}` }]);
+                } else {
+                  handleFirestoreError(e, OperationType.CREATE, 'customers');
+                }
+              }
             }}
-            onEdit={(c) => {
-              updateDoc(doc(db, 'customers', c.id), { ...c, updatedAt: serverTimestamp() });
+            onEdit={async (c) => {
+              if (isBypassMode) {
+                setCustomers(customers.map(cust => cust.id === c.id ? c : cust));
+                return;
+              }
+              try {
+                await updateDoc(doc(db, 'customers', c.id), { ...c, updatedAt: serverTimestamp() });
+              } catch (e) {
+                handleFirestoreError(e, OperationType.UPDATE, 'customers');
+              }
             }}
             onDelete={(id) => {
+              if (isBypassMode) {
+                setCustomers(customers.filter(c => c.id !== id));
+                return;
+              }
               // Delete logic
             }}
           />
@@ -293,14 +421,64 @@ export default function App() {
       case 'orders':
         return (
           <Orders 
+            externalOrders={purchaseOrders}
+            loading={loadingOrders}
+            isBypassMode={isBypassMode}
             onInvoiceCreate={(po) => {
               setIsCreatingInvoice(true);
-              // In a more complex app, we'd pass PO data to pre-fill the form
             }} 
+            onUpdate={async (id, data) => {
+              if (isBypassMode) {
+                setPurchaseOrders(purchaseOrders.map(p => p.id === id ? { ...p, ...data } : p));
+                return;
+              }
+              try {
+                await updateDoc(doc(db, 'purchase_orders', id), { ...data, updatedAt: serverTimestamp() });
+              } catch (e) {
+                handleFirestoreError(e, OperationType.UPDATE, 'purchase_orders');
+              }
+            }}
+            onCreate={async (data) => {
+              try {
+                const poRef = await addDoc(collection(db, 'purchase_orders'), { ...data, createdAt: serverTimestamp() });
+                await addDoc(collection(db, 'tracker'), {
+                  type: 'order', title: `Protocol Initiated: ${data.poNumber}`, poId: poRef.id, status: 'pending', createdAt: serverTimestamp()
+                });
+              } catch (e) {
+                console.error('Firestore PO Create Error:', e);
+                if (isBypassMode) {
+                  const newPoId = `po-${Date.now()}`;
+                  const newPo = { ...data, id: newPoId };
+                  setPurchaseOrders([newPo, ...purchaseOrders]);
+                  // Mock tracker update
+                  setTrackerItems([{ type: 'order', title: `Protocol Initiated: ${data.poNumber}`, status: 'pending', id: `t-${Date.now()}` }, ...trackerItems]);
+                } else {
+                  handleFirestoreError(e, OperationType.CREATE, 'purchase_orders');
+                }
+              }
+            }}
           />
         );
       case 'suppliers':
-        return <Suppliers />;
+        return (
+          <Suppliers 
+            externalSuppliers={suppliers}
+            loading={loadingSuppliers}
+            isBypassMode={isBypassMode}
+            onCreate={async (data) => {
+              try {
+                await addDoc(collection(db, 'suppliers'), { ...data, createdAt: serverTimestamp() });
+              } catch (e) {
+                console.error('Firestore Supplier Create Error:', e);
+                if (isBypassMode) {
+                  setSuppliers([...suppliers, { ...data, id: `sup-${Date.now()}` } as Supplier]);
+                } else {
+                  handleFirestoreError(e, OperationType.CREATE, 'suppliers');
+                }
+              }
+            }}
+          />
+        );
       case 'payments':
         return (
           <div className="flex items-center justify-center h-64 text-slate-500 italic">
@@ -310,7 +488,15 @@ export default function App() {
       case 'customize':
         return <CustomizePage />;
       default:
-        return <Dashboard invoices={invoices} />;
+        return (
+          <Dashboard 
+            invoices={invoices} 
+            leads={leads}
+            trackerItems={trackerItems}
+            products={products}
+            onNavigate={setActiveTab} 
+          />
+        );
     }
   };
 
@@ -345,6 +531,8 @@ export default function App() {
           onMenuClick={() => setIsSidebarCollapsed(!isSidebarCollapsed)}
           showBack={showBack}
           onBack={handleBack}
+          isBypassMode={isBypassMode}
+          dbStatus={dbStatus}
         />
         <div className="flex-1 overflow-y-auto p-4 md:p-8 lg:p-12 max-w-[1600px] mx-auto w-full pb-20 lg:pb-12">
           {renderContent()}

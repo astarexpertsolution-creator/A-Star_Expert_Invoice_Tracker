@@ -6,26 +6,13 @@ import { db } from '../lib/firebase';
 import { collection, onSnapshot, query, addDoc, serverTimestamp } from 'firebase/firestore';
 import { handleFirestoreError, OperationType } from '../lib/firestoreUtils';
 
-export const Suppliers: React.FC = () => {
-  const [suppliers, setSuppliers] = useState<Supplier[]>([]);
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    const suppliersRef = collection(db, 'suppliers');
-    const unsubscribe = onSnapshot(suppliersRef, (snapshot) => {
-      const suppliersData = snapshot.docs.map(doc => ({
-        id: doc.id,
-        ...doc.data()
-      })) as Supplier[];
-      setSuppliers(suppliersData);
-      setLoading(false);
-    }, (error) => {
-      handleFirestoreError(error, OperationType.LIST, 'suppliers');
-      setLoading(false);
-    });
-
-    return () => unsubscribe();
-  }, []);
+export const Suppliers: React.FC<{ 
+  externalSuppliers?: Supplier[], 
+  loading?: boolean, 
+  isBypassMode?: boolean,
+  onCreate?: (data: any) => Promise<void>
+}> = ({ externalSuppliers = [], loading = false, isBypassMode, onCreate }) => {
+  const suppliers = externalSuppliers;
 
   const handleOnboardSupplier = async () => {
     const nextCode = `SUP-${(suppliers.length + 1).toString().padStart(3, '0')}`;
@@ -38,13 +25,10 @@ export const Suppliers: React.FC = () => {
       phone: '+91 000 000 0000',
       address: 'Industrial Zone, State, India',
       status: 'Active' as const,
-      createdAt: serverTimestamp()
     };
 
-    try {
-      await addDoc(collection(db, 'suppliers'), newSupplier);
-    } catch (error) {
-      handleFirestoreError(error, OperationType.CREATE, 'suppliers');
+    if (onCreate) {
+      await onCreate(newSupplier);
     }
   };
 

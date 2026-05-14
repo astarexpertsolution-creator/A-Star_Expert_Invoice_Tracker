@@ -14,7 +14,7 @@
     "@firebase/eslint-plugin-security-rules": "^0.0.2",
     "@google/genai": "^1.29.0",
     "@tailwindcss/vite": "^4.1.14",
-    "@vitejs/plugin-legacy": "^8.0.1",
+    "@vitejs/plugin-legacy": "^6.1.1",
     "@vitejs/plugin-react": "^5.0.4",
     "date-fns": "^4.1.0",
     "dotenv": "^17.2.3",
@@ -24,8 +24,7 @@
     "motion": "^12.23.24",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
-    "terser": "^5.47.1",
-    "vite": "^6.2.0"
+    "terser": "^5.47.1"
   },
   "devDependencies": {
     "@eslint/js": "^10.0.1",
