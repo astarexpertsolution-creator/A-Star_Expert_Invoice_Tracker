@@ -12,11 +12,17 @@ export const Login: React.FC<{ onLogin: () => void }> = ({ onLogin }) => {
   const handleBypassLogin = async () => {
     setLoading(true);
     setError(null);
+    
+    // Add a race condition to prevent hanging indefinitely
+    const timeout = new Promise((_, reject) => 
+      setTimeout(() => reject(new Error('Authentication Timeout')), 8000)
+    );
+
     try {
-      await signInAnonymously(auth);
+      await Promise.race([signInAnonymously(auth), timeout]);
       onLogin();
     } catch (err: any) {
-      console.error('Bypass login failed:', err);
+      console.error('Bypass login failed or timed out:', err);
       // Fallback: still call onLogin to allow UI traversal, 
       // but warn that DB operations might fail if rules are strict.
       onLogin();
@@ -54,7 +60,7 @@ export const Login: React.FC<{ onLogin: () => void }> = ({ onLogin }) => {
           <p className="text-[10px] font-black uppercase tracking-[0.4em] text-stone-300">Enterprise Scientific Access</p>
         </div>
 
-        <Card className="!rounded-[2.5rem] p-8">
+        <Card className="rounded-2xl md:!rounded-[2.5rem] p-8">
           <div className="space-y-8 text-center">
             <div className="space-y-4">
               <h1 className="text-2xl font-black text-text-main uppercase tracking-tighter">System Access</h1>

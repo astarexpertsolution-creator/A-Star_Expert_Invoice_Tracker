@@ -216,10 +216,10 @@ export const AppointmentsPage: React.FC<{ externalItems?: ActionItem[] }> = ({ e
           </div>
         </div>
 
-        <div className="flex flex-wrap gap-2">
+        <div className="flex overflow-x-auto no-scrollbar gap-2 pb-2 -mx-2 px-2 scroll-smooth">
           <Button 
             variant={filter === 'all' ? 'primary' : 'outline'} 
-            className="h-9 px-4 text-[10px] font-black uppercase tracking-widest rounded-xl transition-all"
+            className="h-8 md:h-9 px-3 md:px-4 text-[9px] md:text-[10px] font-black uppercase tracking-widest rounded-lg md:rounded-xl flex-shrink-0 transition-all"
             onClick={() => setFilter('all')}
           >
             All Items
@@ -237,10 +237,10 @@ export const AppointmentsPage: React.FC<{ externalItems?: ActionItem[] }> = ({ e
             <Button 
               key={cat.id}
               variant={filter === cat.id ? 'primary' : 'outline'} 
-              className={`h-9 px-4 text-[10px] font-black uppercase tracking-widest rounded-xl transition-all gap-2`}
+              className={`h-8 md:h-9 px-3 md:px-4 text-[9px] md:text-[10px] font-black uppercase tracking-widest rounded-lg md:rounded-xl flex-shrink-0 transition-all gap-1.5 md:gap-2`}
               onClick={() => setFilter(cat.id)}
             >
-              <div className={`w-2 h-2 rounded-full ${cat.color}`} />
+              <div className={`w-1.5 h-1.5 md:w-2 md:h-2 rounded-full ${cat.color}`} />
               {cat.label}
             </Button>
           ))}
@@ -560,7 +560,7 @@ export const AppointmentsPage: React.FC<{ externalItems?: ActionItem[] }> = ({ e
                   </motion.div>
                 ))
               ) : (
-                <div className="py-12 px-6 text-center bg-stone-50 rounded-[2rem] border border-dashed border-stone-300">
+                <div className="py-12 px-6 text-center bg-stone-50 rounded-2xl md:rounded-[2rem] border border-dashed border-stone-300">
                   <div className="w-16 h-16 bg-white rounded-full flex items-center justify-center mx-auto mb-4 border border-stone-100 shadow-sm">
                     <CheckCircle2 className="text-stone-200" size={32} />
                   </div>
@@ -588,7 +588,7 @@ export const AppointmentsPage: React.FC<{ externalItems?: ActionItem[] }> = ({ e
               initial={{ opacity: 0, scale: 0.95, y: 20 }}
               animate={{ opacity: 1, scale: 1, y: 0 }}
               exit={{ opacity: 0, scale: 0.95, y: 20 }}
-              className="relative w-full max-w-md bg-white rounded-[2rem] shadow-2xl overflow-hidden"
+              className="relative w-full max-w-md bg-white rounded-2xl md:rounded-[2rem] shadow-2xl overflow-hidden"
             >
               <div className="p-6 border-b border-stone-100 flex items-center justify-between">
                 <div>
@@ -640,7 +640,7 @@ export const AppointmentsPage: React.FC<{ externalItems?: ActionItem[] }> = ({ e
               initial={{ opacity: 0, scale: 0.95, y: 20 }}
               animate={{ opacity: 1, scale: 1, y: 0 }}
               exit={{ opacity: 0, scale: 0.95, y: 20 }}
-              className="relative w-full max-w-md bg-white rounded-[2rem] shadow-2xl overflow-hidden"
+              className="relative w-full max-w-md bg-white rounded-2xl md:rounded-[2rem] shadow-2xl overflow-hidden"
             >
               <div className="p-6 border-b border-stone-100 flex items-center justify-between">
                 <div>
@@ -702,7 +702,7 @@ export const AppointmentsPage: React.FC<{ externalItems?: ActionItem[] }> = ({ e
               initial={{ opacity: 0, scale: 0.95, y: 20 }}
               animate={{ opacity: 1, scale: 1, y: 0 }}
               exit={{ opacity: 0, scale: 0.95, y: 20 }}
-              className="relative w-full max-w-md bg-white rounded-[2rem] shadow-2xl overflow-hidden"
+              className="relative w-full max-w-md bg-white rounded-2xl md:rounded-[2rem] shadow-2xl overflow-hidden"
             >
               <div className="p-6 border-b border-stone-100 flex items-center justify-between">
                 <div>

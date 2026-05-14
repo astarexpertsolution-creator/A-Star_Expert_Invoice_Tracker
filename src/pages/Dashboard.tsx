@@ -52,7 +52,7 @@ export const Dashboard: React.FC<{
         ))}
       </div>
 
-      <div className="bg-stone-50/50 rounded-[2rem] border border-stone-200/60 p-8 shadow-sm">
+      <div className="bg-stone-50/50 rounded-2xl md:rounded-[2rem] border border-stone-200/60 p-4 md:p-8 shadow-sm">
         <div className="flex items-center justify-between mb-8">
            <h3 className="text-sm font-black uppercase tracking-widest text-stone-400">Jump to Module</h3>
         </div>
@@ -155,7 +155,7 @@ export const Dashboard: React.FC<{
               </button>
           </div>
 
-          <div className="bg-sidebar-bg rounded-3xl p-10 flex flex-col justify-between text-white shadow-xl overflow-hidden relative min-h-[240px]">
+          <div className="bg-sidebar-bg rounded-2xl md:rounded-3xl p-6 md:p-10 flex flex-col justify-between text-white shadow-xl overflow-hidden relative min-h-[240px]">
             <div className="relative z-10">
               <p className="text-[10px] text-stone-500 uppercase tracking-[0.3em] font-black mb-6">Recent Scientific Revenue</p>
               <p className="text-5xl font-black tracking-tighter mb-2">₹{invoices[0]?.paidAmount.toLocaleString() || "0.00"}</p>

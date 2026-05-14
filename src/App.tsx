@@ -17,14 +17,22 @@ import { Product, Customer, Invoice, PaymentStatus, Lead } from './types';
 import { Card, Button, Input, Select } from './components/UI';
 import { X } from 'lucide-react';
 import { AnimatePresence, motion } from 'motion/react';
-import { db } from './lib/firebase';
+import { db, auth } from './lib/firebase';
+import { onAuthStateChanged } from 'firebase/auth';
 import { collection, onSnapshot, query, orderBy, doc, updateDoc, setDoc, addDoc, serverTimestamp } from 'firebase/firestore';
 import { handleFirestoreError, OperationType } from './lib/firestoreUtils';
 
 export default function App() {
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [isAuthenticated, setIsAuthenticated] = useState<boolean | null>(null);
   const [activeTab, setActiveTab] = useState('dashboard');
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(window.innerWidth < 1024);
+
+  useEffect(() => {
+    const unsubscribe = onAuthStateChanged(auth, (user) => {
+      setIsAuthenticated(!!user);
+    });
+    return () => unsubscribe();
+  }, []);
 
   useEffect(() => {
     const handleResize = () => {
@@ -124,6 +132,32 @@ export default function App() {
   const [paymentAmount, setPaymentAmount] = useState(0);
   const [paymentDate, setPaymentDate] = useState(new Date().toISOString().split('T')[0]);
   const [paymentMode, setPaymentMode] = useState('Bank Transfer');
+  const [authInitialized, setAuthInitialized] = useState(false);
+
+  useEffect(() => {
+    // Safety fallback: if auth takes too long, stop loading
+    const timer = setTimeout(() => {
+      setAuthInitialized(true);
+    }, 5000);
+    return () => clearTimeout(timer);
+  }, []);
+
+  useEffect(() => {
+    if (isAuthenticated !== null) {
+      setAuthInitialized(true);
+    }
+  }, [isAuthenticated]);
+
+  if (!authInitialized && isAuthenticated === null) {
+    return (
+      <div className="min-h-screen bg-[#FAFAFA] flex items-center justify-center">
+        <div className="flex flex-col items-center gap-4">
+          <div className="w-12 h-12 border-4 border-stone-200 border-t-indigo-600 rounded-full animate-spin"></div>
+          <p className="text-[10px] font-black uppercase tracking-[0.3em] text-stone-400">Initializing System Session...</p>
+        </div>
+      </div>
+    );
+  }
 
   if (!isAuthenticated) {
     return <Login onLogin={() => setIsAuthenticated(true)} />;
@@ -305,7 +339,7 @@ export default function App() {
         setIsCollapsed={setIsSidebarCollapsed}
       />
       
-      <main className="flex-1 min-w-0 flex flex-col h-screen">
+      <main className="flex-1 min-w-0 flex flex-col h-[100dvh]">
         <TopBar 
           title={isCreatingInvoice ? 'Create Invoice' : viewingInvoice ? `Invoice: ${viewingInvoice.invoiceNumber}` : activeTab} 
           onMenuClick={() => setIsSidebarCollapsed(!isSidebarCollapsed)}

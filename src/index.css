@@ -32,7 +32,17 @@
 @layer base {
   body {
     @apply font-sans antialiased text-text-main bg-bg-main selection:bg-accent-sage/20 transition-colors duration-300;
+    min-height: 100dvh;
+    /* Special fix for mobile safari 100vh height issue */
+    min-height: -webkit-fill-available;
   }
+  html {
+     height: -webkit-fill-available;
+  }
+}
+
+.safe-area-inset-bottom {
+  padding-bottom: env(safe-area-inset-bottom, 0);
 }
 
 .animate-in {

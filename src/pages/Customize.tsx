@@ -185,7 +185,7 @@ export const CustomizePage: React.FC = () => {
                          <p className="text-[10px] text-stone-500 font-black uppercase tracking-[0.3em]">Module Interaction</p>
                          <Badge className="bg-white/10 text-white border-none">Real-Time Sync</Badge>
                       </div>
-                      <div className="bg-white/5 border border-white/10 p-8 rounded-[2rem] shadow-inner">
+                      <div className="bg-white/5 border border-white/10 p-6 md:p-8 rounded-2xl md:rounded-[2rem] shadow-inner">
                          <div className="flex items-center justify-between mb-8">
                             <div className="flex items-center gap-4">
                                <div className="w-12 h-12 rounded-2xl bg-accent-sage flex items-center justify-center text-sm font-black shadow-lg shadow-accent-sage/30 transition-transform hover:scale-110">A*</div>
@@ -199,7 +199,7 @@ export const CustomizePage: React.FC = () => {
                       </div>
                    </div>
 
-                   <div className="p-10 bg-black/50 rounded-[2.5rem] border border-white/5 shadow-2xl">
+                   <div className="p-8 md:p-10 bg-black/50 rounded-2xl md:rounded-[2.5rem] border border-white/5 shadow-2xl">
                       <div className="flex items-center gap-4 mb-4">
                          <div className="w-2.5 h-2.5 rounded-full bg-red-500"></div>
                          <div className="w-2.5 h-2.5 rounded-full bg-amber-500"></div>

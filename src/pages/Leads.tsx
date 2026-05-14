@@ -314,7 +314,7 @@ export const LeadsPage: React.FC<{ externalLeads: Lead[], loadingLeads: boolean 
           </Button>
         </div>
 
-        <div className="bg-white rounded-3xl border border-stone-200 shadow-sm overflow-hidden">
+        <div className="bg-white rounded-2xl md:rounded-3xl border border-stone-200 shadow-sm overflow-hidden">
           <form 
             id="create-lead-form"
             onSubmit={(e) => handleCreateLead(e)} 
@@ -472,7 +472,7 @@ export const LeadsPage: React.FC<{ externalLeads: Lead[], loadingLeads: boolean 
         <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
           {/* Status Tracker */}
           <div className="lg:col-span-1 space-y-6">
-            <div className="bg-white rounded-3xl border border-stone-200 p-6 space-y-4 shadow-sm">
+            <div className="bg-white rounded-2xl md:rounded-3xl border border-stone-200 p-6 space-y-4 shadow-sm">
               <h3 className="text-[10px] font-black uppercase tracking-widest text-stone-400">Current Phase</h3>
               <div className="space-y-3">
                 {[
@@ -503,7 +503,7 @@ export const LeadsPage: React.FC<{ externalLeads: Lead[], loadingLeads: boolean 
             </div>
 
             {/* Quick Actions */}
-            <div className="bg-stone-900 rounded-3xl p-6 space-y-4 shadow-xl">
+            <div className="bg-stone-900 rounded-2xl md:rounded-3xl p-6 space-y-4 shadow-xl">
               <h3 className="text-[10px] font-black uppercase tracking-widest text-stone-400">Protocol Actions</h3>
               <div className="grid grid-cols-1 gap-2">
                 <Button 
@@ -535,7 +535,7 @@ export const LeadsPage: React.FC<{ externalLeads: Lead[], loadingLeads: boolean 
 
           {/* Main Management Interface */}
           <div className="lg:col-span-3 space-y-6">
-            <div className="bg-white rounded-3xl border border-stone-200 overflow-hidden shadow-sm">
+            <div className="bg-white rounded-2xl md:rounded-3xl border border-stone-200 overflow-hidden shadow-sm">
               <div className="flex border-b border-stone-100 flex-wrap">
                 {[
                   { id: 'enquiry', label: 'Requirements & Enquiries' },
@@ -607,7 +607,7 @@ export const LeadsPage: React.FC<{ externalLeads: Lead[], loadingLeads: boolean 
                 {activeVersionTab === 'meeting' && (
                   <div className="space-y-8">
                     {!selectedLead.appointmentDate || selectedLead.status === CRMStatus.YET_TO_MEET ? (
-                      <div className="space-y-4 p-8 bg-blue-50/50 rounded-3xl border border-blue-100">
+                        <div className="space-y-4 p-6 md:p-8 bg-blue-50/50 rounded-2xl md:rounded-3xl border border-blue-100">
                         <div className="flex items-center gap-2 mb-2">
                           <div className="w-2 h-2 rounded-full bg-blue-500 animate-pulse" />
                           <h4 className="text-[10px] font-black uppercase tracking-widest text-blue-600">Phase: Scheduling</h4>
@@ -655,7 +655,7 @@ export const LeadsPage: React.FC<{ externalLeads: Lead[], loadingLeads: boolean 
                         )}
                         
                         {selectedLead.meetingNotes && (
-                          <div className="p-6 bg-stone-900 rounded-3xl text-white">
+                          <div className="p-6 bg-stone-900 rounded-2xl md:rounded-3xl text-white">
                              <h4 className="text-[9px] font-black uppercase tracking-[0.2em] text-stone-400 mb-2">Internal Meeting Report</h4>
                              <p className="text-xs text-stone-300 font-medium leading-relaxed">{selectedLead.meetingNotes}</p>
                           </div>
@@ -669,7 +669,7 @@ export const LeadsPage: React.FC<{ externalLeads: Lead[], loadingLeads: boolean 
                   <div className="space-y-8">
                     {/* Simplified Quotation Listing and Creation */}
                     <div className="flex flex-col gap-4">
-                       <div className="p-12 text-center bg-stone-50 rounded-[2rem] border border-dashed border-stone-200">
+                       <div className="p-8 md:p-12 text-center bg-stone-50 rounded-2xl md:rounded-[2rem] border border-dashed border-stone-200">
                           <FileText className="mx-auto text-stone-200 mb-4" size={48} />
                           <h4 className="text-sm font-black text-stone-400 uppercase tracking-widest">Pricing Versions Protocol</h4>
                           <p className="text-[10px] text-stone-400 mt-2 font-medium max-w-xs mx-auto">Track every quotation variant shared during negotiations.</p>
@@ -759,7 +759,7 @@ export const LeadsPage: React.FC<{ externalLeads: Lead[], loadingLeads: boolean 
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
           <div className="lg:col-span-1 space-y-6">
-            <div className="bg-white rounded-3xl border border-stone-200 p-6 space-y-4">
+            <div className="bg-white rounded-2xl md:rounded-3xl border border-stone-200 p-6 space-y-4">
               <h3 className="text-sm font-black uppercase tracking-widest text-emerald-900 border-b border-emerald-50 pb-4">Source Lead Profile</h3>
               <div className="space-y-4 pt-2">
                 <div className="p-4 bg-emerald-50 rounded-2xl border border-emerald-100">
@@ -779,7 +779,7 @@ export const LeadsPage: React.FC<{ externalLeads: Lead[], loadingLeads: boolean 
             </div>
           </div>
 
-          <div className="lg:col-span-2 bg-white rounded-3xl border border-stone-200 overflow-hidden">
+          <div className="lg:col-span-2 bg-white rounded-2xl md:rounded-3xl border border-stone-200 overflow-hidden">
             <div className="p-6 border-b border-stone-100 bg-stone-50/50">
               <h3 className="text-sm font-black uppercase tracking-widest text-stone-600">Commercial Registration Details</h3>
             </div>
@@ -891,7 +891,7 @@ export const LeadsPage: React.FC<{ externalLeads: Lead[], loadingLeads: boolean 
         </div>
       </div>
 
-      <div className="bg-white rounded-[1.5rem] border border-stone-200 shadow-sm overflow-hidden">
+      <div className="bg-white rounded-xl md:rounded-[1.5rem] border border-stone-200 shadow-sm overflow-hidden">
         <div className="overflow-x-auto">
           <table className="w-full text-left border-collapse">
             <thead className="bg-stone-50/80 border-b border-stone-200">
