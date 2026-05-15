@@ -98,36 +98,34 @@ const generateMockData = (): Record<string, ActionItem[]> => {
   return data;
 };
 
-export const AppointmentsPage: React.FC<{ externalItems?: ActionItem[] }> = ({ externalItems = [] }) => {
+export const AppointmentsPage: React.FC<{ 
+  externalItems?: ActionItem[];
+  onUpdate?: (id: string, data: any) => Promise<void>;
+  onDelete?: (id: string) => Promise<void>;
+  onCreate?: (data: any) => Promise<void>;
+}> = ({ externalItems = [], onUpdate, onDelete, onCreate }) => {
   const [currentMonth, setCurrentMonth] = useState(new Date());
   const [selectedDate, setSelectedDate] = useState(new Date());
-  const [allData, setAllData] = useState<Record<string, ActionItem[]>>(generateMockData());
+  const [allData, setAllData] = useState<Record<string, ActionItem[]>>({});
 
   useEffect(() => {
-    if (externalItems.length > 0) {
-      setAllData(prev => {
-        const newData = { ...prev };
-        externalItems.forEach(item => {
-          let dateObj: Date;
-          try {
-            // Handle Firestore timestamp OR string
-            dateObj = item.date?.toDate ? item.date.toDate() : new Date(item.date);
-          } catch (e) {
-            dateObj = new Date();
-          }
-          
-          if (isNaN(dateObj.getTime())) dateObj = new Date();
-          
-          const dateKey = format(dateObj, 'yyyy-MM-dd');
-          if (!newData[dateKey]) newData[dateKey] = [];
-          
-          if (!newData[dateKey].some(i => i.id === item.id)) {
-            newData[dateKey].push(item);
-          }
-        });
-        return newData;
-      });
-    }
+    const newData: Record<string, ActionItem[]> = {};
+    externalItems.forEach(item => {
+      let dateObj: Date;
+      try {
+        const d = item.date;
+        dateObj = d?.toDate ? d.toDate() : (d ? new Date(d) : (item as any).createdAt?.toDate ? (item as any).createdAt.toDate() : new Date());
+      } catch (e) {
+        dateObj = new Date();
+      }
+      
+      if (isNaN(dateObj.getTime())) dateObj = new Date();
+      
+      const dateKey = format(dateObj, 'yyyy-MM-dd');
+      if (!newData[dateKey]) newData[dateKey] = [];
+      newData[dateKey].push(item);
+    });
+    setAllData(newData);
   }, [externalItems]);
 
   const [filter, setFilter] = useState<TrackerType | 'all'>('all');
@@ -143,47 +141,32 @@ export const AppointmentsPage: React.FC<{ externalItems?: ActionItem[] }> = ({ e
   const [editForm, setEditForm] = useState<Partial<ActionItem>>({});
 
   // Rollover pending items from past dates to today
-  React.useEffect(() => {
+  useEffect(() => {
+    if (!externalItems.length || !onUpdate) return;
+    
     const todayKey = format(new Date(), 'yyyy-MM-dd');
-    let hasChanges = false;
-    const newData = { ...allData };
-
-    Object.keys(newData).forEach(dateKey => {
-      // If date is in the past
-      if (dateKey < todayKey) {
-        const pastItems = newData[dateKey];
-        const pendingItems = pastItems.filter(item => item.status === 'pending');
-        
-        if (pendingItems.length > 0) {
-          hasChanges = true;
-          
-          // Remove pending items from past date
-          newData[dateKey] = pastItems.filter(item => item.status !== 'pending');
-          
-          // Move them to today
-          if (!newData[todayKey]) newData[todayKey] = [];
-          
-          // Add a "Delayed" prefix or property if needed, but here we just shift them
-          const shiftedItems = pendingItems.map(item => ({
-            ...item,
+    
+    externalItems.forEach(item => {
+      let dateObj: Date;
+      try {
+        const d = item.date;
+        dateObj = d?.toDate ? d.toDate() : (d ? new Date(d) : (item as any).createdAt?.toDate ? (item as any).createdAt.toDate() : null);
+      } catch (e) {
+        return;
+      }
+      
+      if (dateObj && item.status === 'pending') {
+        const itemDateKey = format(dateObj, 'yyyy-MM-dd');
+        if (itemDateKey < todayKey) {
+          // Rollover this item
+          onUpdate(item.id, {
+            date: todayKey,
             title: item.title.startsWith('[ROLLOVER]') ? item.title : `[ROLLOVER] ${item.title}`
-          }));
-          
-          newData[todayKey] = [...newData[todayKey], ...shiftedItems];
-          
-          // If past date is now empty, delete the key
-          if (newData[dateKey].length === 0) {
-            delete newData[dateKey];
-          }
+          });
         }
       }
     });
-
-    if (hasChanges) {
-      setAllData(newData);
-      console.log('Rollover complete: Pending items moved to today.');
-    }
-  }, []); // Run once on mount
+  }, [externalItems.length > 0]); // Run when items first load
 
   // Sync selected date when month changes to keep Day Protocol relevant
   React.useEffect(() => {
@@ -344,68 +327,40 @@ export const AppointmentsPage: React.FC<{ externalItems?: ActionItem[] }> = ({ e
     setIsEditModalOpen(true);
   };
 
-  const submitReschedule = () => {
-    if (!activeItem || !rescheduleDate) return;
+  const submitReschedule = async () => {
+    if (!activeItem || !rescheduleDate || !onUpdate) return;
     
-    const sourceDateKey = format(selectedDate, 'yyyy-MM-dd');
-    const targetDateKey = rescheduleDate;
+    await onUpdate(activeItem.id, {
+      date: rescheduleDate,
+      comments: `Rescheduled: ${comment}${activeItem.comments ? ' | ' + activeItem.comments : ''}`
+    });
     
-    const newData = { ...allData };
-    
-    // Remove from source
-    newData[sourceDateKey] = newData[sourceDateKey].filter(it => it.id !== activeItem.id);
-    
-    // Add to target with comment
-    const updatedItem = { 
-      ...activeItem, 
-      comments: `Rescheduled: ${comment}${activeItem.comments ? ' | ' + activeItem.comments : ''}` 
-    };
-    
-    if (!newData[targetDateKey]) newData[targetDateKey] = [];
-    newData[targetDateKey].push(updatedItem);
-    
-    setAllData(newData);
     setIsRescheduleModalOpen(false);
     setComment('');
     setActiveItem(null);
   };
 
-  const submitEdit = () => {
-    if (!activeItem) return;
+  const submitEdit = async () => {
+    if (!activeItem || !onUpdate) return;
     
-    const dateKey = format(selectedDate, 'yyyy-MM-dd');
-    const updatedItems = allData[dateKey].map(it => 
-      it.id === activeItem.id ? { ...it, ...editForm } as ActionItem : it
-    );
-
-    setAllData({
-      ...allData,
-      [dateKey]: updatedItems
-    });
+    await onUpdate(activeItem.id, editForm);
 
     setIsEditModalOpen(false);
     setActiveItem(null);
   };
 
-  const deleteItem = (id: string) => {
-    const dateKey = format(selectedDate, 'yyyy-MM-dd');
-    setAllData({
-      ...allData,
-      [dateKey]: allData[dateKey].filter(it => it.id !== id)
-    });
+  const deleteItem = async (id: string) => {
+    if (onDelete) {
+      await onDelete(id);
+    }
   };
 
-  const submitCompletion = () => {
-    if (!activeItem) return;
+  const submitCompletion = async () => {
+    if (!activeItem || !onUpdate) return;
     
-    const dateKey = format(selectedDate, 'yyyy-MM-dd');
-    const updatedItems = allData[dateKey].map(it => 
-      it.id === activeItem.id ? { ...it, status: 'completed' as const, comments: comment } : it
-    );
-
-    setAllData({
-      ...allData,
-      [dateKey]: updatedItems
+    await onUpdate(activeItem.id, {
+      status: 'completed',
+      comments: comment
     });
 
     setIsCommentModalOpen(false);

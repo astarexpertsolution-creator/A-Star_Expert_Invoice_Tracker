@@ -1,17 +1,13 @@
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
-    // TEMPORARY: Full access for development troubleshooting
-    match /{document=**} {
-      allow read, write: if true;
+    // Helper function
+    function isSignedIn() {
+      return request.auth != null;
     }
-    
-    // Explicit matches to ensure no ambiguity
-    match /leads/{doc} { allow read, write: if true; }
-    match /customers/{doc} { allow read, write: if true; }
-    match /invoices/{doc} { allow read, write: if true; }
-    match /tracker/{doc} { allow read, write: if true; }
-    match /suppliers/{doc} { allow read, write: if true; }
-    match /products/{doc} { allow read, write: if true; }
+
+    match /{document=**} {
+      allow read, write: if isSignedIn();
+    }
   }
 }

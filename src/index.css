@@ -69,3 +69,11 @@
 .slide-in-from-bottom-4 { animation-name: slide-in-from-bottom; }
 .zoom-in-95 { animation-name: zoom-in; }
 
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+.no-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+

@@ -1,5 +1,20 @@
 import React from 'react';
-import { LayoutDashboard, Users, FileText, CreditCard, ChevronLeft, ChevronRight, Menu, Boxes, ShoppingCart, Truck, Palette, Calendar, UserPlus } from 'lucide-react';
+import { 
+  LayoutDashboard, 
+  Users, 
+  FileText, 
+  CreditCard, 
+  ChevronLeft, 
+  ChevronRight, 
+  Menu, 
+  Boxes, 
+  ShoppingCart, 
+  Truck, 
+  Palette, 
+  Calendar, 
+  UserPlus, 
+  LogOut 
+} from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 
 interface SidebarProps {
@@ -7,6 +22,7 @@ interface SidebarProps {
   setActiveTab: (tab: string) => void;
   isCollapsed: boolean;
   setIsCollapsed: (collapsed: boolean) => void;
+  onLogout?: () => void;
 }
 
 const navSections = [
@@ -21,6 +37,7 @@ const navSections = [
     label: 'Lead Management',
     items: [
       { id: 'leads', label: 'Leads CRM', icon: UserPlus },
+      { id: 'quotations', label: 'Quotations', icon: FileText },
     ]
   },
   {
@@ -47,7 +64,7 @@ const navSections = [
   }
 ];
 
-export const Sidebar: React.FC<SidebarProps> = ({ activeTab, setActiveTab, isCollapsed, setIsCollapsed }) => {
+export const Sidebar: React.FC<SidebarProps> = ({ activeTab, setActiveTab, isCollapsed, setIsCollapsed, onLogout }) => {
   return (
     <>
       {/* Mobile Overlay */}
@@ -148,8 +165,8 @@ export const Sidebar: React.FC<SidebarProps> = ({ activeTab, setActiveTab, isCol
         ))}
       </nav>
 
-      <div className="p-8 border-t border-white/5">
-        <div className="flex items-center gap-4">
+      <div className="p-4 border-t border-white/5 space-y-4">
+        <div className="flex items-center gap-4 px-4">
           <div 
             className="w-10 h-10 rounded-2xl flex items-center justify-center text-xs font-black text-white shrink-0 shadow-lg"
             style={{ backgroundColor: 'var(--theme-primary)' }}
@@ -157,12 +174,22 @@ export const Sidebar: React.FC<SidebarProps> = ({ activeTab, setActiveTab, isCol
             AU
           </div>
           {!isCollapsed && (
-            <div className="text-[12px] overflow-hidden">
+            <div className="text-[12px] overflow-hidden flex-1">
               <p className="text-white font-black truncate tracking-tight uppercase">Admin User</p>
               <p className="text-stone-500 truncate font-bold text-[10px] uppercase">Corporate Admin</p>
             </div>
           )}
         </div>
+        
+        <button
+          onClick={onLogout}
+          className={`w-full flex items-center px-4 py-3 rounded-xl transition-all group hover:bg-red-500/10 text-stone-400 hover:text-red-400 ${isCollapsed ? 'justify-center' : 'gap-4'}`}
+        >
+          <LogOut size={18} className="shrink-0" />
+          {!isCollapsed && (
+            <span className="font-black text-[10px] uppercase tracking-widest">Terminate Session</span>
+          )}
+        </button>
       </div>
     </motion.aside>
     </>
@@ -176,7 +203,8 @@ export const TopBar: React.FC<{
   showBack?: boolean; 
   isBypassMode?: boolean;
   dbStatus?: 'connected' | 'error' | 'testing';
-}> = ({ title, onMenuClick, onBack, showBack, isBypassMode, dbStatus }) => {
+  onLogout?: () => void;
+}> = ({ title, onMenuClick, onBack, showBack, isBypassMode, dbStatus, onLogout }) => {
   return (
     <header className="h-16 md:h-20 px-4 md:px-10 flex items-center justify-between bg-[var(--theme-card-bg,white)] border-b border-border-base sticky top-0 z-40 transition-colors shrink-0">
       <div className="flex items-center gap-3">
@@ -234,12 +262,21 @@ export const TopBar: React.FC<{
           />
           <span className="absolute left-3.5 top-1/2 -translate-y-1/2 text-stone-400 text-xs">🔍</span>
         </div>
+        
+        <button 
+          onClick={onLogout}
+          className="p-2.5 text-stone-400 hover:text-red-500 hover:bg-red-50 rounded-xl transition-all group relative"
+          title="Logout"
+        >
+          <LogOut size={20} />
+          <span className="absolute -bottom-8 left-1/2 -translate-x-1/2 text-[10px] font-black uppercase tracking-widest bg-stone-900 text-white px-2 py-1 rounded opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none">Logout</span>
+        </button>
       </div>
     </header>
   );
 };
 
-export const BottomNav: React.FC<{ activeTab: string; setActiveTab: (tab: string) => void }> = ({ activeTab, setActiveTab }) => {
+export const BottomNav: React.FC<{ activeTab: string; setActiveTab: (tab: string) => void; isVisible?: boolean }> = ({ activeTab, setActiveTab, isVisible = true }) => {
   const items = [
     { id: 'dashboard', label: 'Home', icon: LayoutDashboard },
     { id: 'leads', label: 'Leads', icon: UserPlus },
@@ -248,8 +285,10 @@ export const BottomNav: React.FC<{ activeTab: string; setActiveTab: (tab: string
     { id: 'customers', label: 'Clients', icon: Users },
   ];
 
+  if (!isVisible) return null;
+
   return (
-    <nav className="fixed bottom-0 left-0 right-0 h-16 bg-white/80 backdrop-blur-md border-t border-border-base flex items-center justify-around px-2 z-50 lg:hidden safe-area-inset-bottom">
+    <nav className="fixed bottom-0 left-0 right-0 h-16 bg-white/80 backdrop-blur-md border-t border-border-base flex items-center justify-around px-2 z-50 lg:hidden safe-area-inset-bottom shadow-[0_-4px_10px_rgba(0,0,0,0.05)]">
       {items.map((item) => (
         <button
           key={item.id}

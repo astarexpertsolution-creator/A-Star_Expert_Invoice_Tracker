@@ -65,9 +65,10 @@ export const Dashboard: React.FC<{
         <div className="flex items-center justify-between mb-8">
            <h3 className="text-sm font-black uppercase tracking-widest text-stone-400">Jump to Module</h3>
         </div>
-        <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-7 gap-4">
+        <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-8 gap-4">
           {[
             { id: 'leads', label: 'Leads', icon: UserPlus, color: 'text-indigo-600', bg: 'bg-indigo-50' },
+            { id: 'quotations', label: 'Quotations', icon: FileText, color: 'text-orange-600', bg: 'bg-orange-50' },
             { id: 'invoices', label: 'Invoices', icon: FileText, color: 'text-blue-600', bg: 'bg-blue-50' },
             { id: 'appointments', label: 'Calendar', icon: Calendar, color: 'text-emerald-600', bg: 'bg-emerald-50' },
             { id: 'customers', label: 'Clients', icon: Users, color: 'text-amber-600', bg: 'bg-amber-50' },

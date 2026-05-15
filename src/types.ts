@@ -13,21 +13,22 @@ export enum ProductStatus {
 
 export enum CRMStatus {
   DRAFT = 'Draft',
-  NEW_LEAD = 'New Lead Created',
-  YET_TO_MEET = 'Yet to meet',
-  APPOINTMENT_SCHEDULED = 'Appointment scheduled',
-  MEETING_COMPLETED = 'Meeting completed',
+  NEW_LEAD = 'New Lead', // Created today
+  LEAD = 'Lead', // Older than 1 day
+  APPOINTMENT_SCHEDULED = 'Appointment Scheduled',
+  MEETING_COMPLETED = 'Meeting Happened',
   SAMPLES_SENT = 'Samples Sent',
-  ENQUIRY_RECEIVED = 'Received Enquiry',
-  GATHERING_REQUIREMENT = 'Gathering Requirement',
-  QUOTATION_SHARED = 'Shared Quotation',
-  NEGOTIATION = 'Negotiation',
+  ENQUIRY_RECEIVED = 'Requirements Received',
+  QUOTATION_SHARED = 'Quotation Shared',
+  NEGOTIATION = 'Negotiation Required',
+  QUOTATION_APPROVED = 'Quotation Approved',
   ON_HOLD = 'On Hold',
+  INVALID_LEAD = 'Invalid Lead',
   PO_RECEIVED = 'PO Received',
   CONVERTED = 'Converted',
   LOST = 'Lost',
   REJECTED = 'Rejected',
-  RESCHEDULED = 'Rescheduled',
+  RESCHEDULED = 'Meeting Rescheduled',
 }
 
 export enum LeadType {
@@ -84,6 +85,12 @@ export interface Lead {
   phone?: string;
   requirements?: string;
   status: CRMStatus;
+  meetingDate?: string;
+  meetingType?: 'In Person' | 'Phone Call' | 'Online';
+  meetingVenue?: 'Client Site' | 'Public Location' | 'Our Office';
+  meetingOutcome?: 'Samples Required' | 'Shared Requirements' | 'On Hold' | 'Another Meeting Required';
+  onHoldReason?: string;
+  followUpRequired?: boolean;
   notes?: string;
   meetingNotes?: string;
   assignedTo?: string;
@@ -91,6 +98,7 @@ export interface Lead {
   appointmentTime?: string;
   quotationVersions?: QuotationVersion[];
   enquiryVersions?: EnquiryVersion[];
+  sampleProductIds?: string[];
   createdAt: string;
   updatedAt?: string;
 }

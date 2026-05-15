@@ -50,8 +50,16 @@
         "requirements": { "type": "string" },
         "status": { "type": "string" },
         "notes": { "type": "string" },
+        "onHoldReason": { "type": "string" },
         "appointmentDate": { "type": "string" },
         "appointmentTime": { "type": "string" },
+        "sampleProductIds": { "type": "array", "items": { "type": "string" } },
+        "quotationVersions": { "type": "array", "items": { "type": "object" } },
+        "enquiryVersions": { "type": "array", "items": { "type": "object" } },
+        "meetingNotes": { "type": "string" },
+        "meetingDate": { "type": "string" },
+        "meetingType": { "type": "string" },
+        "meetingOutcome": { "type": "string" },
         "createdAt": { "type": "string" },
         "updatedAt": { "type": "string" }
       },
@@ -108,6 +116,19 @@
         "createdAt": { "type": "string" }
       },
       "required": ["invoiceNumber", "customerId", "grandTotal", "status", "createdAt"]
+    },
+    "Tracker": {
+      "title": "Tracker",
+      "description": "Activity and milestone tracking",
+      "type": "object",
+      "properties": {
+        "type": { "type": "string" },
+        "title": { "type": "string" },
+        "status": { "type": "string" },
+        "poId": { "type": "string" },
+        "createdAt": { "type": "string" }
+      },
+      "required": ["type", "title", "status", "createdAt"]
     }
   },
   "firestore": {
@@ -127,13 +148,17 @@
       "schema": "Customer",
       "description": "Active customers"
     },
-    "purchaseOrders": {
+    "purchase_orders": {
       "schema": "PurchaseOrder",
       "description": "Customer uploaded or manual POs"
     },
     "invoices": {
       "schema": "Invoice",
       "description": "Financial invoices"
+    },
+    "tracker": {
+      "schema": "Tracker",
+      "description": "Activity logs"
     }
   }
 }

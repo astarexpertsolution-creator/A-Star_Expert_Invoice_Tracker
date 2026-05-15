@@ -13,18 +13,21 @@ import { InvoiceCreation } from './pages/InvoiceCreation';
 import { InvoiceDetails } from './pages/InvoiceDetails';
 import { Login } from './pages/Login';
 import { SAMPLE_PRODUCTS, SAMPLE_CUSTOMERS, SAMPLE_INVOICES, SAMPLE_LEADS, SAMPLE_TRACKER } from './constants';
-import { Product, Customer, Invoice, PaymentStatus, Lead } from './types';
+import { Product, Customer, Invoice, PaymentStatus, Lead, Supplier } from './types';
 import { Card, Button, Input, Select } from './components/UI';
 import { X } from 'lucide-react';
 import { AnimatePresence, motion } from 'motion/react';
 import { db, auth } from './lib/firebase';
-import { onAuthStateChanged, signInWithPopup, GoogleAuthProvider } from 'firebase/auth';
+import { onAuthStateChanged, signInWithPopup, GoogleAuthProvider, signOut } from 'firebase/auth';
 import { collection, onSnapshot, query, orderBy, doc, updateDoc, setDoc, addDoc, serverTimestamp, getDocFromServer } from 'firebase/firestore';
 import { handleFirestoreError, OperationType } from './lib/firestoreUtils';
 
 export default function App() {
   const [isAuthenticated, setIsAuthenticated] = useState<boolean | null>(null);
   const [isBypassMode, setIsBypassMode] = useState(() => sessionStorage.getItem('crm_bypass') === 'true');
+  const [leadsViewMode, setLeadsViewMode] = useState<'list' | 'create' | 'details' | 'samples' | 'quotation'>('list');
+  const [selectedLeadId, setSelectedLeadId] = useState<string | null>(null);
+  const [productsSelectedCategory, setProductsSelectedCategory] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState('dashboard');
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(window.innerWidth < 1024);
 
@@ -282,6 +285,18 @@ export default function App() {
     }
   };
 
+  const handleLogout = async () => {
+    try {
+      await signOut(auth);
+      sessionStorage.removeItem('crm_bypass');
+      setIsBypassMode(false);
+      setIsAuthenticated(false);
+      setActiveTab('dashboard');
+    } catch (e) {
+      console.error('Logout Error:', e);
+    }
+  };
+
   const renderContent = () => {
     if (viewingInvoice) {
       return <InvoiceDetails invoice={viewingInvoice} onBack={() => setViewingInvoice(null)} />;
@@ -313,18 +328,26 @@ export default function App() {
         return (
           <ProductsPage 
             products={products} 
+            selectedCategory={productsSelectedCategory}
+            setSelectedCategory={setProductsSelectedCategory}
             onAdd={(p) => setProducts([...products, { ...p, id: `p-${Date.now()}` }])}
             onEdit={(p) => setProducts(products.map(item => item.id === p.id ? p : item))}
             onDelete={(id) => setProducts(products.filter(p => p.id !== id))}
           />
         );
       case 'leads':
+      case 'quotations':
         return (
           <LeadsPage 
             externalLeads={leads} 
             loadingLeads={loadingLeads} 
             isBypassMode={isBypassMode}
             dbStatus={dbStatus}
+            products={products}
+            viewMode={activeTab === 'quotations' ? 'quotation' : leadsViewMode}
+            setViewMode={setLeadsViewMode}
+            selectedLeadId={selectedLeadId}
+            setSelectedLeadId={setSelectedLeadId}
             onUpdate={async (id, data) => {
               if (id === 'seed-mock') {
                 setLeads(data as any);
@@ -357,7 +380,29 @@ export default function App() {
           />
         );
       case 'appointments':
-        return <AppointmentsPage externalItems={trackerItems} />;
+        return (
+          <AppointmentsPage 
+            externalItems={trackerItems} 
+            onUpdate={async (id, data) => {
+              if (isBypassMode) {
+                setTrackerItems(trackerItems.map(item => item.id === id ? { ...item, ...data } : item));
+                return;
+              }
+              try {
+                await updateDoc(doc(db, 'tracker', id), { ...data, updatedAt: serverTimestamp() });
+              } catch (e) {
+                handleFirestoreError(e, OperationType.UPDATE, `tracker/${id}`);
+              }
+            }}
+            onDelete={async (id) => {
+              if (isBypassMode) {
+                setTrackerItems(trackerItems.filter(item => item.id !== id));
+                return;
+              }
+              // Add deleteDoc if needed, for now we just handle update/create
+            }}
+          />
+        );
       case 'customers':
         return (
           <CustomersPage 
@@ -505,27 +550,48 @@ export default function App() {
       setViewingInvoice(null);
     } else if (isCreatingInvoice) {
       setIsCreatingInvoice(false);
+    } else if (activeTab === 'quotations') {
+      setActiveTab('dashboard');
+    } else if (activeTab === 'leads' && leadsViewMode !== 'list') {
+      if (leadsViewMode === 'details' || leadsViewMode === 'create') {
+        setLeadsViewMode('list');
+        setSelectedLeadId(null);
+      } else if (leadsViewMode === 'samples' || leadsViewMode === 'quotation') {
+        setLeadsViewMode('details');
+      } else {
+        setLeadsViewMode('list');
+      }
+    } else if (activeTab === 'products' && productsSelectedCategory) {
+      setProductsSelectedCategory(null);
     } else if (activeTab !== 'dashboard') {
       setActiveTab('dashboard');
     }
   };
 
-  const showBack = activeTab !== 'dashboard' || viewingInvoice !== null || isCreatingInvoice;
+  const showBack = activeTab !== 'dashboard' || 
+                   viewingInvoice !== null || 
+                   isCreatingInvoice || 
+                   (activeTab === 'leads' && leadsViewMode !== 'list') ||
+                   (activeTab === 'products' && productsSelectedCategory !== null);
 
   return (
-    <div className="flex min-h-screen bg-bg-main font-sans antialiased text-text-main">
+    <div className="flex h-screen bg-bg-main font-sans antialiased text-text-main overflow-hidden">
       <Sidebar 
         activeTab={activeTab} 
         setActiveTab={(tab) => {
           setActiveTab(tab);
           setViewingInvoice(null);
           setIsCreatingInvoice(false);
+          setLeadsViewMode('list');
+          setSelectedLeadId(null);
+          setProductsSelectedCategory(null);
         }}
         isCollapsed={isSidebarCollapsed}
         setIsCollapsed={setIsSidebarCollapsed}
+        onLogout={handleLogout}
       />
       
-      <main className="flex-1 min-w-0 flex flex-col h-[100dvh]">
+      <main className="flex-1 min-w-0 flex flex-col h-screen overflow-hidden">
         <TopBar 
           title={isCreatingInvoice ? 'Create Invoice' : viewingInvoice ? `Invoice: ${viewingInvoice.invoiceNumber}` : activeTab} 
           onMenuClick={() => setIsSidebarCollapsed(!isSidebarCollapsed)}
@@ -533,6 +599,7 @@ export default function App() {
           onBack={handleBack}
           isBypassMode={isBypassMode}
           dbStatus={dbStatus}
+          onLogout={handleLogout}
         />
         <div className="flex-1 overflow-y-auto p-4 md:p-8 lg:p-12 max-w-[1600px] mx-auto w-full pb-20 lg:pb-12">
           {renderContent()}
@@ -545,7 +612,11 @@ export default function App() {
           setActiveTab(tab);
           setViewingInvoice(null);
           setIsCreatingInvoice(false);
+          setLeadsViewMode('list');
+          setSelectedLeadId(null);
+          setProductsSelectedCategory(null);
         }}
+        isVisible={isSidebarCollapsed}
       />
 
       {/* Payment Modal */}

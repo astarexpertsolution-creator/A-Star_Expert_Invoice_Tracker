@@ -6,15 +6,16 @@ import { motion, AnimatePresence } from 'motion/react';
 
 interface ProductsPageProps {
   products: Product[];
+  selectedCategory: string | null;
+  setSelectedCategory: (cat: string | null) => void;
   onAdd: (product: Omit<Product, 'id'>) => void;
   onEdit: (product: Product) => void;
   onDelete: (id: string) => void;
 }
 
-export const ProductsPage: React.FC<ProductsPageProps> = ({ products, onAdd, onEdit, onDelete }) => {
+export const ProductsPage: React.FC<ProductsPageProps> = ({ products, selectedCategory, setSelectedCategory, onAdd, onEdit, onDelete }) => {
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState<'All' | ProductStatus>('All');
-  const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
   
   // Modal State
   const [isModalOpen, setIsModalOpen] = useState(false);

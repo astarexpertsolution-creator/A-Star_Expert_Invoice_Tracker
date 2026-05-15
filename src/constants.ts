@@ -1,4 +1,4 @@
-import { Product, Customer, Invoice, PaymentStatus, ProductStatus } from './types';
+import { Product, Customer, Invoice, PaymentStatus, ProductStatus, Lead, CRMStatus } from './types';
 import { MEDICAL_PRODUCTS } from './data/productData';
 
 export const SAMPLE_PRODUCTS: Product[] = MEDICAL_PRODUCTS;
@@ -88,9 +88,9 @@ export const SAMPLE_LEADS: Lead[] = [
     id: 'l1',
     companyName: 'Biotronix Lab',
     contactPerson: 'Dr. Anita Desai',
-    phoneNumber: '9123456780',
+    phone: '9123456780',
     email: 'anita@biotronix.com',
-    status: 'Interested',
+    status: CRMStatus.NEW_LEAD,
     createdAt: '2024-05-10T10:00:00Z',
     notes: 'Interested in GSure Plasmid Kits'
   },
@@ -98,9 +98,9 @@ export const SAMPLE_LEADS: Lead[] = [
     id: 'l2',
     companyName: 'Medicity Hospital',
     contactPerson: 'Rajesh Kumar',
-    phoneNumber: '9234567891',
+    phone: '9234567891',
     email: 'purchase@medicity.com',
-    status: 'Follow-up',
+    status: CRMStatus.ENQUIRY_RECEIVED,
     createdAt: '2024-05-12T14:30:00Z',
     notes: 'Requires bulk quote for Dialyzers'
   }
