@@ -29,7 +29,8 @@ import {
   AlertCircle,
   Package,
   FilePlus,
-  RotateCcw
+  RotateCcw,
+  ArrowRight
 } from 'lucide-react';
 import { Lead, CRMStatus, LeadType, Product } from '../types';
 import { motion, AnimatePresence } from 'motion/react';
@@ -479,11 +480,11 @@ export const LeadsPage: React.FC<{
             </div>
           </div>
           <div className="flex gap-2">
+            <Button variant="outline" size="sm" className="gap-2" onClick={() => { setViewMode('list'); setSelectedLeadId(null); }}>
+              <ArrowLeft size={16} /> Back to Pipeline
+            </Button>
             <Button variant="outline" size="sm" className="gap-2">
               <History size={16} /> History
-            </Button>
-            <Button variant="outline" size="sm" className="gap-2 text-red-500 border-red-100 hover:bg-red-50">
-              <X size={16} /> Mark Lost
             </Button>
           </div>
         </div>
@@ -537,104 +538,102 @@ export const LeadsPage: React.FC<{
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           <div className="lg:col-span-2 space-y-6">
-            {/* Status Workflow Action */}
-            <Card className="border-accent-sage/30 bg-accent-sage/5 relative overflow-hidden">
-               <div className="absolute top-0 right-0 p-4 opacity-10">
-                  <TrendingUp size={80} />
+            {/* High Priority Pipeline Actions */}
+            <Card className="p-5 border-accent-sage/40 shadow-md bg-accent-sage/5 relative overflow-hidden">
+               <div className="absolute top-0 right-0 p-4 opacity-5">
+                  <TrendingUp size={100} />
                </div>
-               <div className="relative z-10 p-2">
-                  <h3 className="text-xs font-black uppercase tracking-widest text-accent-sage mb-4">Pipeline Action Required</h3>
-                  
-                  <div className="flex flex-wrap gap-4">
-                    {/* Stage 1: Lead / Fresh Lead */}
-                    {(selectedLead.status === CRMStatus.NEW_LEAD || selectedLead.status === CRMStatus.LEAD) && (
-                      <div className="flex-1 space-y-4">
-                        <div className="p-3 bg-white/40 rounded-xl border border-accent-sage/10">
-                          <p className="text-sm font-bold text-stone-700">Stage 1: {isFreshLead(selectedLead) ? 'Fresh Lead' : 'Lead'}</p>
-                          <p className="text-xs text-stone-500">Initial capture completed. Next step: Schedule appointment or qualify.</p>
-                        </div>
-                        <div className="flex flex-wrap gap-2">
+               <div className="relative z-10">
+                  <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
+                    <div>
+                       <h3 className="text-[10px] font-black uppercase tracking-[0.2em] text-accent-sage mb-2">Pipeline Progress Control</h3>
+                       <div className="flex items-center gap-3">
+                          <Badge variant="outline" className="bg-white border-accent-sage/30 text-accent-sage font-black text-[10px]">
+                            {selectedLead.status}
+                          </Badge>
+                          <ArrowRight size={14} className="text-stone-300" />
+                          <span className="text-xs font-black text-stone-600 uppercase tracking-widest">
+                            {selectedLead.status === CRMStatus.NEW_LEAD || selectedLead.status === CRMStatus.LEAD || selectedLead.status === CRMStatus.DRAFT ? 'Next: Appointment' :
+                             selectedLead.status === CRMStatus.APPOINTMENT_SCHEDULED || selectedLead.status === CRMStatus.RESCHEDULED ? 'Next: Meeting' :
+                             selectedLead.status === CRMStatus.MEETING_COMPLETED || selectedLead.status === CRMStatus.SAMPLES_SENT ? 'Next: Enquiry' :
+                             selectedLead.status === CRMStatus.ENQUIRY_RECEIVED || selectedLead.status === CRMStatus.QUOTATION_SHARED || selectedLead.status === CRMStatus.NEGOTIATION ? 'Next: Closure' :
+                             'Stage: Finalized'}
+                          </span>
+                       </div>
+                    </div>
+
+                    <div className="flex flex-wrap gap-2.5">
+                      {/* Stage 1 Actions */}
+                      {(selectedLead.status === CRMStatus.NEW_LEAD || selectedLead.status === CRMStatus.LEAD || selectedLead.status === CRMStatus.DRAFT) && (
+                        <>
                           <Button 
                             variant="primary" 
-                            className="gap-2 shadow-lg shadow-accent-sage/20 bg-accent-sage hover:bg-accent-sage/90"
-                            onClick={() => { setUpdateAction('appointment' as any); setShowUpdateModal(true); }}
+                            className="gap-2 bg-accent-sage hover:bg-accent-sage/90 font-black shadow-lg shadow-accent-sage/20 px-6"
+                            onClick={() => { setUpdateAction('appointment'); setShowUpdateModal(true); }}
                           >
                             <Calendar size={18} /> Schedule Appointment
                           </Button>
-                          <Button variant="outline" size="sm" onClick={() => { setUpdateAction('on_hold' as any); setUpdateValue(''); setShowUpdateModal(true); }}>
-                            On Hold
+                          <Button 
+                            variant="outline" 
+                            className="text-orange-600 border-orange-200 hover:bg-orange-50 font-bold bg-white"
+                            onClick={() => { setUpdateAction('on_hold'); setUpdateValue(''); setShowUpdateModal(true); }}
+                          >
+                            <CircleSlash size={16} /> Put On Hold
                           </Button>
-                          <Button variant="outline" size="sm" className="text-red-500 border-red-100" onClick={() => { setUpdateAction('invalid' as any); setUpdateValue(''); setShowUpdateModal(true); }}>
-                            Invalid Lead
+                          <Button 
+                            variant="outline" 
+                            className="text-red-500 border-red-200 hover:bg-red-50 font-bold bg-white"
+                            onClick={() => { setUpdateAction('invalid'); setUpdateValue(''); setShowUpdateModal(true); }}
+                          >
+                            <TrendingDown size={16} /> Mark Invalid
                           </Button>
-                        </div>
-                      </div>
-                    )}
+                        </>
+                      )}
 
-                    {/* Stage 2: Appointment */}
-                    {(selectedLead.status === CRMStatus.APPOINTMENT_SCHEDULED || selectedLead.status === CRMStatus.RESCHEDULED) && (
-                      <div className="flex-1 space-y-4">
-                        <div className="p-3 bg-white/40 rounded-xl border border-accent-sage/10">
-                          <p className="text-sm font-bold text-stone-700">Stage 2: Appointment Management</p>
-                          <p className="text-xs text-stone-500">Appointment scheduled for {selectedLead.appointmentDate} at {selectedLead.appointmentTime}.</p>
-                        </div>
-                        <div className="flex flex-wrap gap-2">
+                      {/* Stage 2 Actions */}
+                      {(selectedLead.status === CRMStatus.APPOINTMENT_SCHEDULED || selectedLead.status === CRMStatus.RESCHEDULED) && (
+                        <>
                           <Button 
                             variant="primary" 
-                            className="gap-2 shadow-lg shadow-blue-500/20 bg-blue-600 hover:bg-blue-700"
+                            className="gap-2 bg-blue-600 hover:bg-blue-700 font-bold shadow-lg shadow-blue-600/20 px-6"
                             onClick={() => { setUpdateAction('meeting'); setShowUpdateModal(true); }}
                           >
-                            <CheckCircle2 size={18} /> Meeting Happened
+                            <CheckCircle2 size={18} /> Record Meeting Outcome
                           </Button>
-                          <Button variant="outline" size="sm" onClick={() => { setUpdateAction('reschedule'); setShowUpdateModal(true); }}>
+                          <Button variant="outline" className="bg-white text-stone-600 font-bold border-stone-200" onClick={() => { setUpdateAction('reschedule'); setShowUpdateModal(true); }}>
                             Reschedule
                           </Button>
-                          <Button variant="outline" size="sm" onClick={() => { setUpdateAction('on_hold' as any); setUpdateValue(''); setShowUpdateModal(true); }}>
+                          <Button variant="outline" className="bg-white text-orange-600 border-orange-200 hover:bg-orange-50" onClick={() => { setUpdateAction('on_hold'); setUpdateValue(''); setShowUpdateModal(true); }}>
                             On Hold
                           </Button>
-                          <Button variant="outline" size="sm" className="text-red-500 border-red-100" onClick={() => { setUpdateAction('invalid' as any); setUpdateValue(''); setShowUpdateModal(true); }}>
-                            Invalid Lead
-                          </Button>
-                        </div>
-                      </div>
-                    )}
+                        </>
+                      )}
 
-                    {/* Stage 3: Samples/Enquiry/Requirements */}
-                    {(selectedLead.status === CRMStatus.MEETING_COMPLETED || selectedLead.status === CRMStatus.SAMPLES_SENT) && (
-                      <div className="flex-1 space-y-4">
-                        <div className="p-3 bg-white/40 rounded-xl border border-accent-sage/10">
-                          <p className="text-sm font-bold text-stone-700">Stage 3: Requirements Management</p>
-                          <p className="text-xs text-stone-500">Capture requirements, enquiries or dispatch samples to proceed.</p>
-                        </div>
-                        <div className="flex flex-wrap gap-2">
+                      {/* Stage 3 Actions */}
+                      {(selectedLead.status === CRMStatus.MEETING_COMPLETED || selectedLead.status === CRMStatus.SAMPLES_SENT) && (
+                        <>
                           <Button 
                             variant="primary" 
-                            className="gap-2 shadow-lg shadow-indigo-500/20 bg-indigo-600 hover:bg-indigo-700"
+                            className="gap-2 bg-indigo-600 hover:bg-indigo-700 font-bold shadow-lg shadow-indigo-600/20 px-6"
                             onClick={() => { setUpdateAction('enquiry'); setUpdateValue(''); setShowUpdateModal(true); }}
                           >
-                            <ClipboardList size={18} /> Record Requirements
+                            <ClipboardList size={18} /> Record Enquiry
                           </Button>
-                          <Button variant="outline" size="sm" className="gap-2" onClick={() => setViewMode('samples')}>
-                            <Package size={16} /> Send Samples
+                          <Button variant="outline" className="bg-white gap-2 text-stone-600 font-bold border-stone-200" onClick={() => setViewMode('samples')}>
+                            <Package size={18} /> Send Samples
                           </Button>
-                          <Button variant="outline" size="sm" onClick={() => { setUpdateAction('on_hold' as any); setUpdateValue(''); setShowUpdateModal(true); }}>
+                          <Button variant="outline" className="bg-white text-orange-600 border-orange-200 hover:bg-orange-50" onClick={() => { setUpdateAction('on_hold'); setUpdateValue(''); setShowUpdateModal(true); }}>
                             On Hold
                           </Button>
-                        </div>
-                      </div>
-                    )}
+                        </>
+                      )}
 
-                    {/* Stage 4: Quotation Management */}
-                    {(selectedLead.status === CRMStatus.ENQUIRY_RECEIVED || selectedLead.status === CRMStatus.QUOTATION_SHARED || selectedLead.status === CRMStatus.NEGOTIATION) && (
-                      <div className="flex-1 space-y-4">
-                        <div className="p-3 bg-white/40 rounded-xl border border-accent-sage/10">
-                          <p className="text-sm font-bold text-stone-700">Stage 4: Quotation Builder</p>
-                          <p className="text-xs text-stone-500">Requirements received. Generate proposals and manage versions.</p>
-                        </div>
-                        <div className="flex flex-wrap gap-2">
+                      {/* Stage 4 Actions */}
+                      {(selectedLead.status === CRMStatus.ENQUIRY_RECEIVED || selectedLead.status === CRMStatus.QUOTATION_SHARED || selectedLead.status === CRMStatus.NEGOTIATION) && (
+                        <>
                           <Button 
                             variant="primary" 
-                            className="gap-2 shadow-lg shadow-orange-500/20 bg-orange-600 hover:bg-orange-700"
+                            className="gap-2 bg-orange-600 hover:bg-orange-700 font-bold shadow-lg shadow-orange-600/20 px-6"
                             onClick={() => { setViewMode('quotation'); setQuotationItems([]); setCustomerEmail(selectedLead.email || ''); }}
                           >
                             <FileText size={18} /> {selectedLead.quotationVersions?.length ? 'Revise Quotation' : 'Create Quotation'}
@@ -644,128 +643,83 @@ export const LeadsPage: React.FC<{
                             <>
                               <Button 
                                 variant="outline" 
-                                size="sm" 
-                                className="text-green-600 hover:bg-green-50"
+                                className="bg-white text-green-600 border-green-200 hover:bg-green-50 font-bold"
                                 onClick={() => { setUpdateAction('approve_quotation'); setShowUpdateModal(true); }}
                               >
                                 Quotation Approved
                               </Button>
-                              <Button variant="outline" size="sm" onClick={() => { setUpdateAction('negotiation'); setShowUpdateModal(true); }}>
-                                Negotiation Required
+                              <Button variant="outline" className="bg-white text-stone-600 font-bold border-stone-200" onClick={() => { setUpdateAction('negotiation'); setShowUpdateModal(true); }}>
+                                Negotiation
                               </Button>
                             </>
                           ) : null}
-                          
-                          <Button variant="outline" size="sm" onClick={() => { setUpdateAction('on_hold' as any); setUpdateValue(''); setShowUpdateModal(true); }}>
+                          <Button variant="outline" className="bg-white text-orange-600 border-orange-200 hover:bg-orange-50" onClick={() => { setUpdateAction('on_hold'); setUpdateValue(''); setShowUpdateModal(true); }}>
                             On Hold
                           </Button>
-                        </div>
-                      </div>
-                    )}
+                        </>
+                      )}
 
-                    {selectedLead.status === CRMStatus.QUOTATION_APPROVED && (
-                      <div className="flex-1 space-y-4">
-                        <div className="p-3 bg-green-50 rounded-xl border border-green-100">
-                          <p className="text-sm font-bold text-green-700">Stage 5: PO Management</p>
-                          <p className="text-xs text-green-600">Quotation approved. Awaiting Purchase Order documentation.</p>
-                        </div>
-                        <div className="flex flex-wrap gap-2">
-                          <Button 
-                            variant="primary" 
-                            className="gap-2 bg-green-600 hover:bg-green-700"
-                            onClick={() => alert('PO Management Module integration coming soon')}
-                          >
-                            <FilePlus size={18} /> Record PO Received
-                          </Button>
-                        </div>
-                      </div>
-                    )}
-
-                    {selectedLead.status === CRMStatus.ON_HOLD && (
-                      <div className="flex-1 space-y-4">
-                        <div className="p-3 bg-orange-50 rounded-xl border border-orange-100">
-                          <p className="text-sm font-bold text-orange-700 uppercase tracking-tight flex items-center gap-2">
-                             <CircleSlash size={14} /> Lead On Hold
-                          </p>
-                          <p className="text-xs text-orange-600 font-medium">Reason: {selectedLead.onHoldReason || 'Waiting for client review'}</p>
-                        </div>
+                      {/* Reactivate / Move back from terminal states */}
+                      {(selectedLead.status === CRMStatus.ON_HOLD || selectedLead.status === CRMStatus.INVALID_LEAD) && (
                         <Button 
                           variant="outline" 
-                          size="sm" 
-                          className="w-full text-[10px] font-black uppercase tracking-widest border-orange-200 text-orange-700 hover:bg-orange-50"
-                          onClick={() => { setUpdateAction('appointment' as any); setShowUpdateModal(true); }}
+                          className="gap-2 border-accent-sage text-accent-sage hover:bg-accent-sage/5 font-bold bg-white px-6"
+                          onClick={() => { setUpdateAction('appointment'); setShowUpdateModal(true); }}
                         >
-                          Reactivate Opportunity
+                          <RotateCcw size={18} /> Reactivate Pipeline
                         </Button>
-                      </div>
-                    )}
-
-                    {selectedLead.status === CRMStatus.INVALID_LEAD && (
-                      <div className="flex-1 space-y-4">
-                        <div className="p-3 bg-red-50 rounded-xl border border-red-100">
-                          <p className="text-sm font-bold text-red-700 uppercase tracking-tight flex items-center gap-2">
-                             <TrendingDown size={14} /> Invalid Lead
-                          </p>
-                          <p className="text-xs text-red-600 font-medium italic">Disqualified from active pipeline</p>
-                        </div>
-                        <Button 
-                          variant="outline" 
-                          size="sm" 
-                          className="w-full text-[10px] font-black uppercase tracking-widest border-red-200 text-red-700 hover:bg-red-50"
-                          onClick={() => { setUpdateAction('appointment' as any); setShowUpdateModal(true); }}
-                        >
-                          Re-Qualify & Attempt Contact
-                        </Button>
-                      </div>
-                    )}
+                      )}
+                    </div>
                   </div>
                </div>
             </Card>
 
             {/* Detailed Info */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <Card className="p-6 border-stone-200 shadow-sm">
-                <h3 className="text-[10px] font-black uppercase tracking-[0.2em] text-stone-400 mb-4 flex items-center gap-2">
-                  <User size={14} /> Contact Details
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <Card className="p-4 border-stone-200 shadow-sm transition-all hover:shadow-md">
+                <h3 className="text-[9px] font-black uppercase tracking-[0.2em] text-stone-400 mb-3 flex items-center gap-2">
+                  <User size={12} /> Contact Details
                 </h3>
-                <div className="space-y-4">
-                  <div className="flex items-start gap-3">
-                    <div className="w-8 h-8 rounded-lg bg-stone-100 flex items-center justify-center text-stone-500">
-                      <User size={16} />
+                <div className="space-y-3">
+                  <div className="flex items-start gap-2.5">
+                    <div className="w-7 h-7 rounded-lg bg-stone-100 flex items-center justify-center text-stone-500 shrink-0">
+                      <User size={14} />
                     </div>
                     <div>
                       <p className="text-xs font-black text-stone-900">{selectedLead.contactPerson || 'N/A'}</p>
-                      <p className="text-[10px] font-bold text-stone-400 uppercase">{selectedLead.designation || 'Position Unspecified'}</p>
+                      <p className="text-[9px] font-bold text-stone-400 uppercase tracking-wider">{selectedLead.designation || 'Position Unspecified'}</p>
                     </div>
                   </div>
-                  <div className="flex items-center gap-3">
-                    <Mail size={16} className="text-stone-300" />
-                    <span className="text-xs font-medium text-stone-600">{selectedLead.email || 'No email provided'}</span>
+                  <div className="flex items-center gap-2.5 pl-0.5">
+                    <Mail size={14} className="text-stone-300" />
+                    <span className="text-[11px] font-medium text-stone-600 truncate">{selectedLead.email || 'No email provided'}</span>
                   </div>
-                  <div className="flex items-center gap-3">
-                    <Phone size={16} className="text-stone-300" />
-                    <span className="text-xs font-medium text-stone-600">{selectedLead.phone || 'No phone provided'}</span>
+                  <div className="flex items-center gap-2.5 pl-0.5">
+                    <Phone size={14} className="text-stone-300" />
+                    <span className="text-[11px] font-medium text-stone-600">{selectedLead.phone || 'No phone provided'}</span>
                   </div>
                 </div>
               </Card>
 
-              <Card className="p-6 border-stone-200 shadow-sm">
-                <h3 className="text-[10px] font-black uppercase tracking-[0.2em] text-stone-400 mb-4 flex items-center gap-2">
-                  <Building2 size={14} /> Lead Source Info
+              <Card className="p-4 border-stone-200 shadow-sm transition-all hover:shadow-md">
+                <h3 className="text-[9px] font-black uppercase tracking-[0.2em] text-stone-400 mb-3 flex items-center gap-2">
+                  <Building2 size={12} /> Source Information
                 </h3>
-                <div className="space-y-4">
-                   <div>
-                      <p className="text-[10px] font-bold text-stone-400 uppercase mb-1">Source</p>
-                      <p className="text-xs font-black text-stone-900">{selectedLead.leadSource || 'Organic / Manual'}</p>
-                   </div>
-                   <div>
-                      <p className="text-[10px] font-bold text-stone-400 uppercase mb-1">Type</p>
-                      <Badge variant="outline">{selectedLead.leadType || 'General'}</Badge>
+                <div className="space-y-3">
+                   <div className="grid grid-cols-2 gap-2">
+                      <div>
+                        <p className="text-[8px] font-bold text-stone-400 uppercase mb-0.5">Lead Source</p>
+                        <p className="text-[11px] font-black text-stone-900">{selectedLead.leadSource || 'Organic'}</p>
+                      </div>
+                      <div>
+                        <p className="text-[8px] font-bold text-stone-400 uppercase mb-0.5">Lead Type</p>
+                        <div className="flex"><Badge size="sm" variant="outline" className="text-[8px] py-0">{selectedLead.leadType || 'General'}</Badge></div>
+                      </div>
                    </div>
                    {selectedLead.referredBy && (
-                     <div>
-                        <p className="text-[10px] font-bold text-stone-400 uppercase mb-1">Referred By</p>
-                        <p className="text-xs font-bold text-accent-sage">{selectedLead.referredBy}</p>
+                     <div className="pt-2 border-t border-stone-50">
+                        <p className="text-[8px] font-bold text-stone-400 uppercase mb-0.5">Referred By</p>
+                        <p className="text-[11px] font-bold text-accent-sage">{selectedLead.referredBy}</p>
                      </div>
                    )}
                 </div>
@@ -774,29 +728,29 @@ export const LeadsPage: React.FC<{
 
             {/* Notes & Requirements History */}
             <Card className="border-stone-200 shadow-sm overflow-hidden">
-               <div className="p-4 bg-stone-50 border-b border-stone-200 flex items-center justify-between">
-                  <h3 className="text-xs font-black uppercase tracking-widest text-stone-500">Information Logs</h3>
+               <div className="px-4 py-2 bg-stone-50 border-b border-stone-200 flex items-center justify-between">
+                  <h3 className="text-[9px] font-black uppercase tracking-widest text-stone-500">Internal Notes</h3>
                </div>
-               <div className="p-6 space-y-8">
+               <div className="p-4 space-y-6">
                   {selectedLead.meetingNotes && (
-                    <div className="space-y-2">
+                    <div className="space-y-1.5">
                       <div className="flex items-center gap-2 text-stone-400">
-                         <MessageSquare size={14} />
-                         <span className="text-[10px] font-black uppercase tracking-widest">Meeting Notes</span>
+                         <MessageSquare size={12} />
+                         <span className="text-[8px] font-black uppercase tracking-widest">Meeting Notes</span>
                       </div>
-                      <div className="p-4 bg-stone-50 rounded-xl border border-stone-100 text-sm italic text-stone-600 leading-relaxed">
+                      <div className="p-3 bg-stone-50 rounded-xl border border-stone-100 text-xs italic text-stone-600 leading-relaxed font-medium">
                         {selectedLead.meetingNotes}
                       </div>
                     </div>
                   )}
 
-                  <div className="space-y-2">
+                  <div className="space-y-1.5">
                     <div className="flex items-center gap-2 text-stone-400">
-                       <ClipboardList size={14} />
-                       <span className="text-[10px] font-black uppercase tracking-widest">Current Requirements</span>
+                       <ClipboardList size={12} />
+                       <span className="text-[8px] font-black uppercase tracking-widest">Requirements</span>
                     </div>
-                    <div className="p-4 bg-stone-50 rounded-xl border border-stone-100 text-sm text-stone-600 leading-relaxed">
-                      {selectedLead.requirements || 'No specific requirements recorded yet.'}
+                    <div className="p-3 bg-stone-50 rounded-xl border border-stone-100 text-xs text-stone-600 leading-relaxed font-medium">
+                      {selectedLead.requirements || 'No specific requirements recorded.'}
                     </div>
                   </div>
 
@@ -849,37 +803,37 @@ export const LeadsPage: React.FC<{
           </div>
 
           <div className="space-y-6">
-            <Card className="p-6 border-stone-200 shadow-sm">
-               <h3 className="text-[10px] font-black uppercase tracking-[0.2em] text-stone-400 mb-4">Pipeline Metrics</h3>
-               <div className="space-y-6">
+            <Card className="p-4 border-stone-200 shadow-sm">
+               <h3 className="text-[9px] font-black uppercase tracking-[0.2em] text-stone-400 mb-3">Pipeline Metrics</h3>
+               <div className="space-y-4">
                   <div className="flex items-center justify-between">
-                     <span className="text-xs text-stone-500 font-medium">Capture Date</span>
-                     <span className="text-xs font-bold text-stone-900">{formatDate(selectedLead.createdAt)}</span>
+                     <span className="text-[10px] text-stone-500 font-bold uppercase tracking-tight">Captured</span>
+                     <span className="text-[11px] font-bold text-stone-900">{formatDate(selectedLead.createdAt)}</span>
                   </div>
                   <div className="flex items-center justify-between">
-                     <span className="text-xs text-stone-500 font-medium">Last Activity</span>
-                     <span className="text-xs font-bold text-stone-900">{selectedLead.updatedAt ? formatDate(selectedLead.updatedAt) : 'N/A'}</span>
+                     <span className="text-[10px] text-stone-500 font-bold uppercase tracking-tight">Last Update</span>
+                     <span className="text-[11px] font-bold text-stone-900">{selectedLead.updatedAt ? formatDate(selectedLead.updatedAt) : 'N/A'}</span>
                   </div>
-                  <div className="pt-4 border-t border-stone-100">
-                     <p className="text-[10px] font-bold text-stone-400 uppercase mb-3">Appointments</p>
+                  <div className="pt-3 border-t border-stone-100">
+                     <p className="text-[8px] font-black text-stone-400 uppercase tracking-widest mb-2">Next Milestone</p>
                      {selectedLead.appointmentDate ? (
-                        <div className="p-3 bg-blue-50 border border-blue-100 rounded-xl">
+                        <div className="p-2.5 bg-blue-50 border border-blue-100 rounded-xl">
                            <div className="flex items-center gap-2 text-blue-600 mb-1">
-                              <Calendar size={14} />
-                              <span className="text-[10px] font-black uppercase tracking-widest">Scheduled</span>
+                              <Calendar size={12} />
+                              <span className="text-[8px] font-black uppercase tracking-[0.2em]">Appointment</span>
                            </div>
-                           <p className="text-xs font-bold text-blue-900">{format(new Date(selectedLead.appointmentDate), 'PPPP')}</p>
-                           <p className="text-[10px] text-blue-600 mt-0.5">{selectedLead.appointmentTime || 'Time unset'}</p>
+                           <p className="text-[11px] font-bold text-blue-900">{format(new Date(selectedLead.appointmentDate), 'dd MMM yyyy')}</p>
+                           <p className="text-[9px] text-blue-600 font-bold mt-0.5">{selectedLead.appointmentTime || 'TBD'}</p>
                         </div>
                      ) : (
-                        <Button variant="outline" size="sm" className="w-full text-[10px] uppercase font-black border-dashed">Schedule Appointment</Button>
+                        <Button variant="outline" size="sm" className="w-full text-[9px] uppercase font-black border-dashed h-8">Schedule Call</Button>
                      )}
                   </div>
                </div>
             </Card>
 
             <Card className="p-6 bg-stone-900 text-white shadow-xl">
-               <h3 className="text-[10px] font-black uppercase tracking-widest text-stone-500 mb-4">Internal Discussion</h3>
+               <h3 className="text-[10px] font-black uppercase tracking-widest text-stone-500 mb-4">Internal Notes</h3>
                <textarea 
                   className="w-full h-24 bg-white/5 border border-white/10 rounded-xl p-3 text-xs text-stone-300 placeholder:text-stone-600 outline-none focus:ring-1 focus:ring-white/20 transition-all resize-none"
                   placeholder="Internal notes (not visible to client)..."
@@ -1514,7 +1468,40 @@ export const LeadsPage: React.FC<{
                         <span className="text-[9px] font-bold text-stone-300 uppercase tracking-widest">Captured</span>
                         <span className="text-[10px] font-black text-stone-500 uppercase">{formatDate(lead.createdAt).split(' ')[0]} {formatDate(lead.createdAt).split(' ')[1]}</span>
                      </div>
-                     <div className="flex -space-x-1.5">
+                     <div className="flex items-center gap-1">
+                        {(lead.status === CRMStatus.NEW_LEAD || lead.status === CRMStatus.LEAD || lead.status === CRMStatus.DRAFT) && (
+                          <Button 
+                            size="sm" 
+                            variant="primary"
+                            className="h-7 w-7 p-0 rounded-full bg-accent-sage hover:bg-accent-sage/90"
+                            onClick={(e) => { e.stopPropagation(); setSelectedLeadId(lead.id); setUpdateAction('appointment'); setShowUpdateModal(true); }}
+                            title="Schedule Appointment"
+                          >
+                            <Calendar size={12} />
+                          </Button>
+                        )}
+                        {lead.status === CRMStatus.APPOINTMENT_SCHEDULED && (
+                          <Button 
+                            size="sm" 
+                            variant="primary"
+                            className="h-7 w-7 p-0 rounded-full bg-blue-600 hover:bg-blue-700"
+                            onClick={(e) => { e.stopPropagation(); setSelectedLeadId(lead.id); setUpdateAction('meeting'); setShowUpdateModal(true); }}
+                            title="Log Meeting"
+                          >
+                            <CheckCircle2 size={12} />
+                          </Button>
+                        )}
+                        {(lead.status === CRMStatus.NEW_LEAD || lead.status === CRMStatus.LEAD || lead.status === CRMStatus.DRAFT || lead.status === CRMStatus.APPOINTMENT_SCHEDULED) && (
+                          <Button 
+                            size="sm" 
+                            variant="outline"
+                            className="h-7 w-7 p-0 rounded-full text-orange-500 border-orange-100 hover:bg-orange-50 bg-white"
+                            onClick={(e) => { e.stopPropagation(); setSelectedLeadId(lead.id); setUpdateAction('on_hold'); setUpdateValue(''); setShowUpdateModal(true); }}
+                            title="Put On Hold"
+                          >
+                            <CircleSlash size={12} />
+                          </Button>
+                        )}
                         <div className="w-6 h-6 rounded-full border-2 border-white bg-stone-100 flex items-center justify-center text-[8px] font-bold text-stone-400">
                           {lead.contactPerson?.[0] || 'U'}
                         </div>
@@ -1583,9 +1570,42 @@ export const LeadsPage: React.FC<{
                       <p className="text-[9px] text-stone-400 uppercase font-bold tracking-widest">{formatDate(lead.createdAt).split(',')[1] || 'Capturing...'}</p>
                     </td>
                     <td className="px-6 py-4 text-right">
-                       <button className="p-2 text-stone-300 hover:text-stone-900 transition-colors">
-                          <MoreVertical size={18} />
-                       </button>
+                       <div className="flex items-center justify-end gap-2">
+                          {(lead.status === CRMStatus.NEW_LEAD || lead.status === CRMStatus.LEAD || lead.status === CRMStatus.DRAFT) && (
+                            <Button 
+                              size="sm" 
+                              variant="outline"
+                              className="h-8 text-[10px] uppercase font-black tracking-widest border-accent-sage text-accent-sage hover:bg-accent-sage/5"
+                              onClick={(e) => { e.stopPropagation(); setSelectedLeadId(lead.id); setUpdateAction('appointment'); setShowUpdateModal(true); }}
+                            >
+                              Appt
+                            </Button>
+                          )}
+                          {lead.status === CRMStatus.APPOINTMENT_SCHEDULED && (
+                            <Button 
+                              size="sm" 
+                              variant="outline"
+                              className="h-8 text-[10px] uppercase font-black tracking-widest border-blue-500 text-blue-600 hover:bg-blue-50"
+                              onClick={(e) => { e.stopPropagation(); setSelectedLeadId(lead.id); setUpdateAction('meeting'); setShowUpdateModal(true); }}
+                            >
+                              Meeting
+                            </Button>
+                          )}
+                          {(lead.status !== CRMStatus.ON_HOLD && lead.status !== CRMStatus.INVALID_LEAD && lead.status !== CRMStatus.PO_RECEIVED) && (
+                            <Button 
+                              size="sm" 
+                              variant="ghost"
+                              className="h-8 w-8 p-0 text-orange-400 hover:text-orange-600 hover:bg-orange-50"
+                              onClick={(e) => { e.stopPropagation(); setSelectedLeadId(lead.id); setUpdateAction('on_hold'); setUpdateValue(''); setShowUpdateModal(true); }}
+                              title="Hold"
+                            >
+                              <CircleSlash size={14} />
+                            </Button>
+                          )}
+                          <button className="p-2 text-stone-300 hover:text-stone-900 transition-colors">
+                            <MoreVertical size={18} />
+                          </button>
+                       </div>
                     </td>
                   </tr>
                 ))}
